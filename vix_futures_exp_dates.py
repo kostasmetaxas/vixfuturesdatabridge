@@ -3,6 +3,7 @@ import pandas
 import pandas_market_calendars as market_cal
 import datetime
 
+date_format ='%Y-%m-%d'
 
 
 # cboe_calendar = market_cal.calendar_utils.get_calendar('CME')
@@ -17,7 +18,7 @@ import datetime
 #Date format: Year-Month-Day
 #Returns True - False
 def is_third_friday_of_month(input_date, friday_counter):
-    parsed_current_date = datetime.datetime.strptime(input_date, '%Y-%m-%d')
+    parsed_current_date = datetime.datetime.strptime(input_date, date_format)
     current_week_num = parsed_current_date.isocalendar()[1]
     return (friday_counter == 3) and (parsed_current_date.weekday() == 4)
 
@@ -28,14 +29,14 @@ def is_third_friday_of_month(input_date, friday_counter):
 def run_over_time_frame():
     #Goes through the years
 
-    for year in range(2018, 2019):
+    for year in range(2012, 2013):
 
         #Goes through the months
         for month in range(1,13):
             month = "%02d" % month
             start_date = str(year) + '-' + str(month) + '-' + '01'
 
-            parsed_initial_date = datetime.datetime.strptime(start_date, '%Y-%m-%d')
+            parsed_initial_date = datetime.datetime.strptime(start_date, date_format)
             friday_counter = 0
 
             #Goes through the days
@@ -47,7 +48,7 @@ def run_over_time_frame():
                 current_day = new_string_part
 
                 current_date = '-'.join([current_year, current_month, current_day])
-                parsed_current_date = datetime.datetime.strptime(current_date, '%Y-%m-%d')
+                parsed_current_date = datetime.datetime.strptime(current_date, date_format)
 
                 if parsed_current_date.weekday() == 4:
                     friday_counter += 1
@@ -57,7 +58,7 @@ def run_over_time_frame():
                     current_date_minus_month = parsed_current_date - thirty_days
 
                     if current_date_minus_month.weekday()==2:
-                        print('VIX EXPIRATION', current_date_minus_month)
+                        print('VIX EXPIRATION', current_date_minus_month.strftime(date_format))
 
                     # TODO: CHECK IF HOLIDAY
                     # TODO: FIX DATE IF HOLIDAY
