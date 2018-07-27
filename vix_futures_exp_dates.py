@@ -3,6 +3,7 @@ import pandas
 import pandas_market_calendars as market_cal
 import datetime
 
+#Date format: Year-Month-Day
 date_format ='%Y-%m-%d'
 
 
@@ -14,8 +15,7 @@ date_format ='%Y-%m-%d'
 # TODO: CROSS REFERENCE FOR HOLIDAYS
 # TODO: IF HOLIDAY FIX DATE (30 DAYS PRIOR TO THE PRECEDING TRADING DAY)
 
-#Checks if input date is a wednesday in the third week of the month.
-#Date format: Year-Month-Day
+#Checks if input date is the third friday of the month.
 #Returns True - False
 def is_third_friday_of_month(input_date, friday_counter):
     parsed_current_date = datetime.datetime.strptime(input_date, date_format)
@@ -23,20 +23,21 @@ def is_third_friday_of_month(input_date, friday_counter):
     return (friday_counter == 3) and (parsed_current_date.weekday() == 4)
 
 
-
-# TODO: fix years range
-
 def run_over_time_frame():
     #Goes through the years
 
-    for year in range(2012, 2013):
+    futures_exp_dates = []
+    thirty_days = datetime.timedelta(days=30)
+
+
+# TODO: FIX YEAR RANGE
+    for year in range(2013, 2020):
 
         #Goes through the months
         for month in range(1,13):
             month = "%02d" % month
             start_date = str(year) + '-' + str(month) + '-' + '01'
 
-            parsed_initial_date = datetime.datetime.strptime(start_date, date_format)
             friday_counter = 0
 
             #Goes through the days
@@ -54,22 +55,21 @@ def run_over_time_frame():
                     friday_counter += 1
 
                 if is_third_friday_of_month(current_date, friday_counter):
-                    thirty_days = datetime.timedelta(days=30)
                     current_date_minus_month = parsed_current_date - thirty_days
 
                     if current_date_minus_month.weekday()==2:
-                        print('VIX EXPIRATION', current_date_minus_month.strftime(date_format))
+                        futures_exp_dates.append(current_date_minus_month.strftime(date_format))
+                        # print('VIX EXPIRATION', current_date_minus_month.strftime(date_format))
 
                     # TODO: CHECK IF HOLIDAY
                     # TODO: FIX DATE IF HOLIDAY
 
-                    break;
+                    break
 
+    # Discarding first date element. It contains a date corresponding to the staring year's preceding december future expiration date.
+    futures_exp_dates.pop(0)
 
-
-#download_link = 'https://markets.cboe.com/us/futures/market_statistics/historical_data/products/csv/VX/' + vix_expiration_date
-#   print(download_link)
-
+    return futures_exp_dates
 
 # Execute
 run_over_time_frame()
