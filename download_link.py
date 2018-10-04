@@ -3,7 +3,7 @@ import pandas
 from vix_futures_exp_dates import run_over_time_frame
 
 dateless_link = 'https://markets.cboe.com/us/futures/market_statistics/historical_data/products/csv/VX/'
-data_path = './data/'
+data_path = './new_data/'
 
 def download_data():
 
