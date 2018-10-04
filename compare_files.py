@@ -1,5 +1,6 @@
 import hashlib
 import glob
+import time
 
 def hash_file(filename):
 
@@ -17,14 +18,36 @@ def hash_file(filename):
         # return hex of digest
         return hash.hexdigest()
 
-def compare_files(file1,file2):
-    
-def replace_file(file1,file2):
-    
-    
-    # current_data_list refers to the data that was used for the last calculation.
-    current_data_list = glob.glob("data/*.csv")
-    # new_data_list refers to the most recently downloaded data
-    new_data_list = glob.glob("new_data/*.csv")
+print(hash_file("data/2013-01-16.csv"))
+# hash_file("data/2013-01-16(copy).csv")
 
-    print(current_data_list[0] +" "+ new_data_list[0])
+# ------------------------------------------------------------------------------
+
+# def replace_file(file1,file2):
+
+
+def compare_files():
+
+    # current_data_list refers to the data that was used for the last calculation.
+    current_data_list = sorted(glob.glob("data/*.csv"))
+    # new_data_list refers to the most recently downloaded data
+    new_data_list = sorted(glob.glob("new_data/*.csv"))
+
+
+    #removing the "data/" and the "new_data/" parts.
+    for index, a_file in enumerate(current_data_list):
+        split_string = a_file.split("/",1)
+        current_data_list[index] = split_string[1]
+
+    for index, a_file in enumerate(new_data_list):
+        split_string = a_file.split("/",1)
+        new_data_list[index] = split_string[1]
+
+# TODO COMPARE FILES WITH SAME NAME, HASH AND REPLACE IF NEEDED (FROM NEW_DATA TO DATA)
+
+
+
+
+
+
+compare_files()
