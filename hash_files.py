@@ -15,5 +15,3 @@ def hash_file(filename):
 
         # return hex of digest
         return hash.hexdigest()
-
-#print( hash_file(example.csv))
