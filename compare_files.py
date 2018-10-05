@@ -1,10 +1,8 @@
 import hashlib
 import glob
 import time
-<<<<<<< HEAD
 from os.path import exists
-=======
->>>>>>> 0007cfe3a561b33da0eceb2e0b38cbc991914740
+from shutil import copyfile, copy
 
 def hash_file(filename):
 
@@ -22,11 +20,6 @@ def hash_file(filename):
         # return hex of digest
         return hash.hexdigest()
 
-<<<<<<< HEAD
-=======
-print(hash_file("data/2013-01-16.csv"))
-# hash_file("data/2013-01-16(copy).csv")
->>>>>>> 0007cfe3a561b33da0eceb2e0b38cbc991914740
 
 # ------------------------------------------------------------------------------
 
@@ -37,11 +30,7 @@ def compare_files():
 
     # current_data_list refers to the data that was used for the last calculation.
     current_data_list = sorted(glob.glob("data/*.csv"))
-<<<<<<< HEAD
     # new_data_list refers to the most recently downloaded data.
-=======
-    # new_data_list refers to the most recently downloaded data
->>>>>>> 0007cfe3a561b33da0eceb2e0b38cbc991914740
     new_data_list = sorted(glob.glob("new_data/*.csv"))
 
 
@@ -57,7 +46,6 @@ def compare_files():
 # TODO COMPARE FILES WITH SAME NAME, HASH AND REPLACE IF NEEDED (FROM NEW_DATA TO DATA)
 
 
-<<<<<<< HEAD
     for index, a_file in enumerate(new_data_list):
         try:
             # Only compares file names. Not content.
@@ -65,14 +53,17 @@ def compare_files():
                 # Using hash to compare content.
                 current_file_hash = hash_file("data/" + a_file)
                 new_file_hash = hash_file("new_data/" + a_file)
-                if current_file_hash == new_file_hash:
-                    print("SAME. DO NOT REPLACE")
-                else:
-                    print("REPLACE.")
+                if current_file_hash != new_file_hash:
+                    # Overwrites old version with the updated one.
+                    copyfile("new_data/" + a_file, "data/" + a_file)
+                    print("REPLACE")
         except IndexError:
+            # Refers to new files in new_data_list that do not exist in current_data_list.
             print("EXTRA FILE")
+            copy("new_data/" + a_file, "data/")
             pass
         except FileNotFoundError:
+            # Refers to the files in the current_data_list. It is impossible to occur in new_data_list as a for-each loop is implemented.
             print("FILE TO BE HASHED, NOT FOUND")
             pass
 # print(exists("data/2013-01-16.csv"))
@@ -81,8 +72,6 @@ def compare_files():
 
 
 
-=======
->>>>>>> 0007cfe3a561b33da0eceb2e0b38cbc991914740
 
 
 
