@@ -64,7 +64,7 @@ def compare_files():
             pass
         except FileNotFoundError:
             # Refers to the files in the current_data_list. It is impossible to occur in new_data_list as a for-each loop is implemented.
-            #print("FILE TO BE HASHED, NOT FOUND")
+            print("FILE TO BE HASHED, NOT FOUND")
             pass
         finally:
             print("Data updated.")
