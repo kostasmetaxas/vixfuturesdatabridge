@@ -56,17 +56,18 @@ def compare_files():
                 if current_file_hash != new_file_hash:
                     # Overwrites old version with the updated one.
                     copyfile("new_data/" + a_file, "data/" + a_file)
-                    print("REPLACE")
+                    #print("REPLACE")
         except IndexError:
             # Refers to new files in new_data_list that do not exist in current_data_list.
-            print("EXTRA FILE")
+            #print("EXTRA FILE")
             copy("new_data/" + a_file, "data/")
             pass
         except FileNotFoundError:
             # Refers to the files in the current_data_list. It is impossible to occur in new_data_list as a for-each loop is implemented.
-            print("FILE TO BE HASHED, NOT FOUND")
+            #print("FILE TO BE HASHED, NOT FOUND")
             pass
-
+        finally:
+            print("Data updated.")
 
 
 # Excecute
