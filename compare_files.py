@@ -66,14 +66,8 @@ def compare_files():
             # Refers to the files in the current_data_list. It is impossible to occur in new_data_list as a for-each loop is implemented.
             print("FILE TO BE HASHED, NOT FOUND")
             pass
-# print(exists("data/2013-01-16.csv"))
 
 
 
-
-
-
-
-
-
+# Excecute
 compare_files()
