@@ -1,7 +1,10 @@
 import hashlib
 import glob
 import time
+<<<<<<< HEAD
 from os.path import exists
+=======
+>>>>>>> 0007cfe3a561b33da0eceb2e0b38cbc991914740
 
 def hash_file(filename):
 
@@ -19,6 +22,11 @@ def hash_file(filename):
         # return hex of digest
         return hash.hexdigest()
 
+<<<<<<< HEAD
+=======
+print(hash_file("data/2013-01-16.csv"))
+# hash_file("data/2013-01-16(copy).csv")
+>>>>>>> 0007cfe3a561b33da0eceb2e0b38cbc991914740
 
 # ------------------------------------------------------------------------------
 
@@ -29,7 +37,11 @@ def compare_files():
 
     # current_data_list refers to the data that was used for the last calculation.
     current_data_list = sorted(glob.glob("data/*.csv"))
+<<<<<<< HEAD
     # new_data_list refers to the most recently downloaded data.
+=======
+    # new_data_list refers to the most recently downloaded data
+>>>>>>> 0007cfe3a561b33da0eceb2e0b38cbc991914740
     new_data_list = sorted(glob.glob("new_data/*.csv"))
 
 
@@ -45,6 +57,7 @@ def compare_files():
 # TODO COMPARE FILES WITH SAME NAME, HASH AND REPLACE IF NEEDED (FROM NEW_DATA TO DATA)
 
 
+<<<<<<< HEAD
     for index, a_file in enumerate(new_data_list):
         try:
             # Only compares file names. Not content.
@@ -68,6 +81,8 @@ def compare_files():
 
 
 
+=======
+>>>>>>> 0007cfe3a561b33da0eceb2e0b38cbc991914740
 
 
 
