@@ -41,4 +41,6 @@ def VIX_time_series(first_target_contract, roll_days, forward):
 
     return
 
+# TODO EDIT AFTER TESTING
+# Execute
 VIX_time_series("2013-01-16", '0', '1')
