@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import glob
 import csv
 
 #Date format: Year-Month-Day
@@ -29,10 +30,15 @@ def VIX_time_series(first_target_contract, roll_days, forward):
     with open(file_name, 'wb') as csvfile:
         filewriter = csv.writer(csvfile, delimiter=',',quotechar='|', quoting=csv.QUOTE_MINIMAL)
 
+    csv_data_list = sorted(glob.glob("data/*.csv"))
 
-    # OPEN FIRST TARGET CONTRACT FILE
+    df = pd.DataFrame(columns = ['Trade Date', 'Futures', 'Open', 'High', 'Low', 'Close', 'Settle', 'Change', 'Total Volume', 'EFP', 'Open Interest'])
 
-    # REPEAT UNTIL THERE IS NO NEXT FILE TO USE
+    for data in csv_data_list:
+        print(data)
+        df = pd.read_csv(data)
+        print(df)
+        break
 
         # APPEND ALL ENTRIES UNTIL EXPIRATION MINUS ROLL_DAYS
 
