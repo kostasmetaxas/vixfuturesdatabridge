@@ -20,11 +20,7 @@ def hash_file(filename):
         # return hex of digest
         return hash.hexdigest()
 
-
 # ------------------------------------------------------------------------------
-
-# def replace_file(file1,file2):
-
 
 def compare_files():
 
@@ -42,9 +38,6 @@ def compare_files():
     for index, a_file in enumerate(new_data_list):
         split_string = a_file.split("/",1)
         new_data_list[index] = split_string[1]
-
-# TODO COMPARE FILES WITH SAME NAME, HASH AND REPLACE IF NEEDED (FROM NEW_DATA TO DATA)
-
 
     for index, a_file in enumerate(new_data_list):
         try:
@@ -64,11 +57,9 @@ def compare_files():
             pass
         except FileNotFoundError:
             # Refers to the files in the current_data_list. It is impossible to occur in new_data_list as a for-each loop is implemented.
-            #print("FILE TO BE HASHED, NOT FOUND")
+            print("FILE TO BE HASHED, NOT FOUND. CHECK CONTROL FLOW.")
             pass
-        finally:
-            print("Data updated.")
 
 
-# Excecute
+# Execute
 compare_files()

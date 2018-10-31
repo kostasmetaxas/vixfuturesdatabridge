@@ -6,10 +6,8 @@ import datetime
 #Date format: Year-Month-Day
 date_format ='%Y-%m-%d'
 
-
-# cboe_calendar = market_cal.calendar_utils.get_calendar('CME')
-# holidays = cboe_calendar.holidays()
-
+cboe_calendar = market_cal.calendar_utils.get_calendar('CME')
+holidays = cboe_calendar.holidays()
 
 
 # TODO: CROSS REFERENCE FOR HOLIDAYS
@@ -30,7 +28,7 @@ def run_over_time_frame():
     thirty_days = datetime.timedelta(days=30)
 
 
-# TODO: FIX YEAR RANGE
+    # TODO: FIX YEAR RANGE
     for year in range(2013, 2020):
 
         #Goes through the months
