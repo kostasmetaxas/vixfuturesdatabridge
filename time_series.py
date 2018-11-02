@@ -21,14 +21,14 @@ date_format ='%Y-%m-%d'
 
 # first_target_contract: First contract in time series for which VIX curve is calculated. Input in '%Y-%m-%d' format.
 # roll_days: Amount of days ,before current contract expiration, roll to the next contract.
-# forward: Refers to the VX<forward>. Example: if forward=2 calculate VX2 curve.
-def generate_time_series(first_target_contract, roll_days, forward):
+# months_forward: Refers to the VX<forward>. Example: if forward=2 calculate VX2 curve.
+def generate_time_series(first_target_contract, roll_days, months_forward):
 
-    # TODO DEFAULT VALUES IF EMPTY PARAMS
 
     # Create new .csv file where time series data will be inserted.
-    file_name = first_target_contract + '_' + roll_days + '_' + forward + '_Time_Series.csv'
+    file_name = first_target_contract + '_' + roll_days + '_' + months_forward + '_Time_Series.csv'
     last_date = ''
+
 
     with open(file_name, 'wb') as csvfile:
         filewriter = csv.writer(csvfile, delimiter=',',quotechar='|', quoting=csv.QUOTE_MINIMAL)
@@ -40,8 +40,14 @@ def generate_time_series(first_target_contract, roll_days, forward):
     except ValueError:
         sys.exit('Invalid target contract expiration date.')
 
+
+    #Removing contracts before the first target contract so that the time series does not contain previous data.
     while True:
         split_string = csv_data_list[0].split("/",1)
+        if split_string != first_target_contract:
+            csv_data_list.remove(0)
+        else:
+            break
 
 
     # Create an empty df (data frame) with the files' column names.
@@ -51,16 +57,20 @@ def generate_time_series(first_target_contract, roll_days, forward):
     one_day = datetime.timedelta(days=1)
     parsed_roll_days = datetime.timedelta(days = roll_days)
 
+
     # Go through the data and replace the df content each time a new file is accessed.
     for data in csv_data_list:
         #print(data)
         df = pd.read_csv(data)
 
+
         split_string = data.split("/",1)
         contract_exp = split_string[1]
         #print(contract_exp)
 
+
         parsed_contract_date = datetime.datetime.strptime(contract_exp, date_format)
+
 
         #IF LAST_DATE EMPTY <-- FIRST TRADE_DATE
         if last_date == '':
@@ -72,6 +82,7 @@ def generate_time_series(first_target_contract, roll_days, forward):
         if parsed_last_date == (parsed_contract_date - parsed_roll_days):
             #ROLL, USE NEXT FILE, START FROM PARSED_LAST_DATE TRADE_DATE
         else:
+            df.loc[df['Trade Date'] >= '' & df['Trade Date'] <= '']
             #COPY ROW, TO FIND ROW COMPARE PARSED_LAST_DATE WITH TRADE_DATE IN CSV
 
 
@@ -80,7 +91,10 @@ def generate_time_series(first_target_contract, roll_days, forward):
         #COMPARE EXP_DATE WITT EXP_DATE - ROLL_DAYS
 
 
-        # df.loc[df['Trade Date'] >= '' & df['Trade Date'] <= '']
+
+        #REMOVE AFTER TEST
+        print(df)
+        break
 
     return
 

@@ -6,11 +6,12 @@ dateless_link = 'https://markets.cboe.com/us/futures/market_statistics/historica
 data_path = './new_data/'
 
 def download_data():
-
+    print("Calculating contract expiration dates...")
     futures_exp_dates = run_over_time_frame()
+    print("Done.")
     failed_download_counter = 0
 
-    print('downloading data...')
+    print('Downloading data...')
     for expiration_date in futures_exp_dates:
 
         csv_name = expiration_date + '.csv'
