@@ -30,7 +30,7 @@ def compare_files():
     new_data_list = sorted(glob.glob("new_data/*.csv"))
 
 
-    #removing the "data/" and the "new_data/" parts.
+    #removing the strings "data/" and the "new_data/" in the filenames included in the glob.
     for index, a_file in enumerate(current_data_list):
         split_string = a_file.split("/",1)
         current_data_list[index] = split_string[1]
