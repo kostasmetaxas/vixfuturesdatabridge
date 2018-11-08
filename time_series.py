@@ -10,27 +10,18 @@ from vix_futures_exp_dates import run_over_time_frame
 date_format ='%Y-%m-%d'
 
 
-
-# USE THESE AS DEFAULTS IF NO ARGUMENTS
-# first_target_contract = "2013-01-16"
-#
-# roll_days = 0
-#
-# forward = 1
-
-
-# TODO LOCATE TARGET CONTRACT
-# TODO IMPLEMENT SMOOTHING
-# TODO WHEN APPENDING DATA TO TIME SERIES INCLUDE FILE NAME
-#
-
-# target_date: Time series' starting point. Input in '%Y-%m-%d' format.
-# roll_days: Amount of days ,before current contract expiration, roll to the next contract.
-# months_forward: Refers to the VX<forward>. Example: if forward=2 calculate VX2 curve.
+# target_date:      Time series' starting point. Input in '%Y-%m-%d' format.
+# roll_days:        Amount of days ,before current contract expiration, roll to the next contract.
+# months_forward:   Refers to the VX<forward>. Example: if forward=2 calculate VX2 curve.
+# smoothing :       Toggle time-series smoothing starting on roll date using the perpetual series method.
 def generate_time_series(target_date, roll_days, months_forward, smoothing):
 
+    if roll_days > 15:
+        sys.exit('Maximum roll days 15. Insert valid amount of days')
+
+
     # Create new .csv file where time series data will be inserted.
-    file_name = first_target_contract + '_' + roll_days + '_' + months_forward + '_Time_Series.csv'
+    file_name = target_date + '_' + roll_days + '_' + months_forward + '_Time_Series.csv'
     last_used_date = ''
 
 
@@ -93,47 +84,67 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing):
 
 
 
-#---------------------------------------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------------------------------------------------------------------
 
+# TODO IMPLEMENT SMOOTHING
+# TODO WHEN APPENDING DATA TO TIME SERIES INCLUDE FILE NAME
+# TODO GET DATA FROM DATAFRAME TO TIME SERIES
 
+    # Amount of weight shifted from the current contract to the next during rolls.
+    shift_weight = 100 / roll_days
 
-    # Go through the data and replace the df content each time a new file is accessed.
-    for data in csv_data_list:
-        #print(data)
-        df = pd.read_csv(data)
+    # Goes through the file list and replaces the dataframe content each time a new file is accessed.
+    for csv_file in csv_data_list:
+        #print(csv_file)
+        df = pd.read_csv(csv_file)
 
         # KEEP LAST ENTRY
-        split_string = data.split("/",1)
-        contract_exp = split_string[1]
-        #print(contract_exp)
+        split_string = csv_file.split("/",1)
+        expiration_date = split_string[1]
+        #print(expiration_date)
+
+        current_contract_weight = 100
+        next_contract_weight    = 0
+
+        roll = False
+
+        while not roll:
+            parsed_expiration_date = datetime.datetime.strptime(expiration_date, date_format)
+            parsed_roll_date = parsed_expiration_date - parsed_roll_days
+
+            #IF last_used_date EMPTY <-- FIRST TRADE_DATE
+            if last_used_date == '':
+                print()
+                #TODO
+                # last_used_date = first file's first trade date + parse
+            else:
+                parsed_last_used_date = parsed_last_used_date + one_day
 
 
-        parsed_contract_date = datetime.datetime.strptime(contract_exp, date_format)
+            if smoothing and parsed_last_used_date > parsed_roll_date:
+                # TODO IMPLEMENT SMOOTHING ON SETTLE VALUES
+                current_contract_weight -= shift_weight
+                next_contract_weight    += shift_weight
 
 
-        #IF last_used_date EMPTY <-- FIRST TRADE_DATE
-        if last_used_date == '':
-            # last_used_date = first file's first trade date
-        else:
-            parsed_last_used_date = parsed_last_used_date + one_day
-
-
-        if parsed_last_used_date == (parsed_contract_date - parsed_roll_days):
-            #ROLL, USE NEXT FILE, START FROM PARSED_last_used_date TRADE_DATE
-        else:
-            df.loc[df['Trade Date'] >= '' & df['Trade Date'] <= '']
-            #COPY ROW, TO FIND ROW COMPARE PARSED_last_used_date WITH TRADE_DATE IN CSV
-
-
-        #COMPARE EXP_DATE WITH last_used_date
-
-        #COMPARE EXP_DATE WITT EXP_DATE - ROLL_DAYS
+            else:
+                if parsed_last_used_date == (parsed_roll_date):
+                    roll = True
+                else:
+                    #TODO
+                    df.loc[df['Trade Date'] >= '' & df['Trade Date'] <= '']
+                    #COPY ROW, TO FIND ROW COMPARE PARSED_last_used_date WITH TRADE_DATE IN CSV
 
 
 
-        #REMOVE AFTER TEST
-        print(df)
-        break
+
+
+
+
+
+                #REMOVE AFTER TEST
+                # print(df)
+                # break
 
     return
 
