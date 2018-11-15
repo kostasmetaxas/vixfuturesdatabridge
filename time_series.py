@@ -6,8 +6,6 @@ import csv
 import sys
 from vix_futures_exp_dates import run_over_time_frame
 
-#Date format: Year-Month-Day
-date_format ='%Y-%m-%d'
 
 
 # target_date:      Time series' starting point. Input in '%Y-%m-%d' format.
@@ -16,12 +14,15 @@ date_format ='%Y-%m-%d'
 # smoothing :       Toggle time-series smoothing starting on roll date using the perpetual series method.
 def generate_time_series(target_date, roll_days, months_forward, smoothing):
 
+    #Date format: Year-Month-Day
+    date_format ='%Y-%m-%d'
+
     if roll_days > 15:
         sys.exit('Maximum roll days 15. Insert valid amount of days')
 
 
     # Create new .csv file where time series data will be inserted.
-    file_name = target_date + '_' + roll_days + '_' + months_forward + '_Time_Series.csv'
+    file_name = target_date + '_' + str(roll_days) + '_' + str(months_forward) + '_Time_Series.csv'
     last_used_date = ''
 
 
@@ -99,6 +100,7 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing):
         df = pd.read_csv(csv_file)
 
         # KEEP LAST ENTRY
+
         split_string = csv_file.split("/",1)
         expiration_date = split_string[1]
         #print(expiration_date)
@@ -114,12 +116,29 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing):
 
             #IF last_used_date EMPTY <-- FIRST TRADE_DATE
             if last_used_date == '':
-                print()
-                #TODO
-                # last_used_date = first file's first trade date + parse
+                last_used_date = target_date_parsed
+
             else:
                 parsed_last_used_date = parsed_last_used_date + one_day
 
+
+
+
+
+            #TODO
+
+            # GET ROW FROM CSV
+            df.set_index("Trade Date", inplace = True)
+            row = df.loc[df[parsed_last_used_date]]
+            print(parsed_last_used_date)
+            print(row)
+            #COPY ROW, TO FIND ROW COMPARE PARSED_last_used_date WITH TRADE_DATE IN CSV
+
+            # CHECK IF SMOOTHING
+            # if smoothing:
+                # TRUE, GET ROW FROM NEXT FILE AND SMOOTH
+
+            # APPEND ROW IN TIME SERIES FILE
 
             if smoothing and parsed_last_used_date > parsed_roll_date:
                 # TODO IMPLEMENT SMOOTHING ON SETTLE VALUES
@@ -131,9 +150,7 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing):
                 if parsed_last_used_date == (parsed_roll_date):
                     roll = True
                 else:
-                    #TODO
-                    df.loc[df['Trade Date'] >= '' & df['Trade Date'] <= '']
-                    #COPY ROW, TO FIND ROW COMPARE PARSED_last_used_date WITH TRADE_DATE IN CSV
+                    print()
 
 
 
@@ -146,8 +163,8 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing):
                 # print(df)
                 # break
 
-    return
+    # return
 
 # TODO EDIT AFTER TESTING
 # Execute
-generate_time_series("2013-01-16", '0', '1', False)
+generate_time_series("2013-01-16", 0, 1, False)
