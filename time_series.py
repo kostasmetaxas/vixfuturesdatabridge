@@ -95,11 +95,13 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing):
     parsed_last_used_date = ''
     # Goes through the file list and replaces the dataframe content each time a new file is accessed.
     counter = target_index
-    while counter <= len(csv_data_list):
+    while counter <= len(csv_data_list)-1:
 
         csv_file = csv_data_list[counter]
         df = pd.read_csv(csv_file)
         # print(df)
+        counter += 1
+
 
         # KEEP LAST ENTRY
 
@@ -140,9 +142,9 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing):
                 row = date_indexed_df.loc[last_used_date_str]
                 output_time_series = output_time_series.append(row)
             except KeyError:
-                sys.exit("Item not found in DataFrame")
+                print("Not a business day.")
+                # sys.exit("Item not found in DataFrame")
 
-            print(output_time_series)
 
 
             #COPY ROW, TO FIND ROW COMPARE PARSED_last_used_date WITH TRADE_DATE IN CSV
@@ -159,15 +161,14 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing):
                 next_contract_weight    += shift_weight
 
 
-            else:
-                if parsed_last_used_date == (parsed_roll_date):
-                    roll = True
-                else:
-                    print()
-
-        counter += 1
+            if parsed_last_used_date == (parsed_roll_date):
+                print("-----------REACHED--------------")
+                roll = True
 
 
+
+    print(output_time_series)
+    output_time_series.to_csv(file_name)
     # return output_time_series
 
 # TODO EDIT AFTER TESTING
