@@ -6,8 +6,6 @@ import csv
 import sys
 from vix_futures_exp_dates import run_over_time_frame
 
-#Date format: Year-Month-Day
-date_format ='%Y-%m-%d'
 
 
 # target_date:      Time series' starting point. Input in '%Y-%m-%d' format.
@@ -16,19 +14,17 @@ date_format ='%Y-%m-%d'
 # smoothing :       Toggle time-series smoothing starting on roll date using the perpetual series method.
 def generate_time_series(target_date, roll_days, months_forward, smoothing):
 
+    #Date format: Year-Month-Day
+    date_format ='%Y-%m-%d'
+
     if roll_days > 15:
         sys.exit('Maximum roll days 15. Insert valid amount of days')
 
 
     # Create new .csv file where time series data will be inserted.
-    file_name = target_date + '_' + roll_days + '_' + months_forward + '_Time_Series.csv'
-    last_used_date = ''
-
+    file_name = target_date + '_' + str(roll_days) + '_' + str(months_forward) + '_Time_Series.csv'
 
     expiration_dates_list = run_over_time_frame()
-
-    target_date_parsed = datetime.datetime.strptime(target_date, date_format)
-
     valid_contracts = 0
 
 
@@ -37,20 +33,20 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing):
     If the input date is past the contract's expiration +1 is added to the
     valid_contract counter. If valid_contract == forward the first target contract
     means we reached the desired month and are past the first_target_contract.
-    To go back to the correct contract we subtract 1 from the index returned
-    when the loop is broken.
     '''
     for target_contract_index, a_contract in enumerate(expiration_dates_list):
 
-        a_contract_parsed = datetime.datetime.strptime(a_contract, date_format)
-
-        if target_date_parsed >= a_contract_parsed:
+        if  a_contract >= target_date:
             valid_contracts += 1
+            print("VALID CONTRACTS " + str(valid_contracts))
 
             if valid_contracts == months_forward:
                 break
 
-    first_target_contract = expiration_dates_list[target_contract_index - 1]
+    # TODO
+    # FIX target_contract_index SO THAT IT NEVER LANDS OFF THE LIST
+    print("TARGET INDEX " + str(target_contract_index))
+    first_target_contract = expiration_dates_list[target_contract_index]
 
     with open(file_name, 'wb') as csvfile:
         filewriter = csv.writer(csvfile, delimiter=',',quotechar='|', quoting=csv.QUOTE_MINIMAL)
@@ -62,92 +58,148 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing):
     correct point in time.
     '''
     csv_data_list = sorted(glob.glob("data/*.csv"))
+    date_list = []
+
+    for index, a_file in enumerate(csv_data_list):
+        temp_split_string = a_file.split('/',1)
+        split_string = temp_split_string[1].split('.',1)
+        date_list.append(split_string[0])
+
     try:
-        target_index = csv_data_list.index(first_target_contract)
+        target_index = date_list.index(first_target_contract)
     except ValueError:
         sys.exit('Invalid target contract index.')
 
-    while True:
-        split_string = csv_data_list[0].split("/",1)
-        if split_string != first_target_contract:
-            csv_data_list.remove(0)
-        else:
-            break
+
 
 
     # Create an empty df (data frame) with the files' column names.
     df = pd.DataFrame()
+    next_df = pd.DataFrame()
     #Date format: Year-Month-Day
     date_format ='%Y-%m-%d'
     one_day = datetime.timedelta(days=1)
-    parsed_roll_days = datetime.timedelta(days = roll_days)
+    parsed_roll_days = datetime.timedelta(days=roll_days)
 
+    # Amount of weight shifted from the current contract to the next during rolls.
+    if roll_days > 0:
+        shift_weight = 1 / roll_days
+
+    output_time_series = pd.DataFrame()
+    parsed_last_used_date = ''
+    # Goes through the file list and replaces the dataframe content each time a new file is accessed.
+    counter = target_index
+
+    while counter <= len(csv_data_list)-1:
+        csv_file = csv_data_list[counter]
+        df = pd.read_csv(csv_file)
+        # print(df)
+
+
+        split_string = csv_file.split("/",1)
+        temp_name_list1 = split_string[1]
+        temp_name_list2 = temp_name_list1.split('.',1)
+        expiration_date = temp_name_list2[0]
+        # print(expiration_date)
+
+        current_contract_weight = 1
+        next_contract_weight    = 0
+
+        roll = False
 
 
 #-------------------------------------------------------------------------------------------------------------------------------------------
 
 # TODO IMPLEMENT SMOOTHING
-# TODO WHEN APPENDING DATA TO TIME SERIES INCLUDE FILE NAME
-# TODO GET DATA FROM DATAFRAME TO TIME SERIES
 
-    # Amount of weight shifted from the current contract to the next during rolls.
-    shift_weight = 100 / roll_days
-
-    # Goes through the file list and replaces the dataframe content each time a new file is accessed.
-    for csv_file in csv_data_list:
-        #print(csv_file)
-        df = pd.read_csv(csv_file)
-
-        # KEEP LAST ENTRY
-        split_string = csv_file.split("/",1)
-        expiration_date = split_string[1]
-        #print(expiration_date)
-
-        current_contract_weight = 100
-        next_contract_weight    = 0
-
-        roll = False
 
         while not roll:
-            parsed_expiration_date = datetime.datetime.strptime(expiration_date, date_format)
+            try:
+                parsed_expiration_date = datetime.datetime.strptime(expiration_date, date_format)
+            except ValueError:
+                sys.exit("Can't parse date.")
+
             parsed_roll_date = parsed_expiration_date - parsed_roll_days
 
-            #IF last_used_date EMPTY <-- FIRST TRADE_DATE
-            if last_used_date == '':
-                print()
-                #TODO
-                # last_used_date = first file's first trade date + parse
+            if parsed_last_used_date == '':
+                try:
+                    parsed_last_used_date = datetime.datetime.strptime(target_date, date_format)
+                except ValueError:
+                    sys.exit("Can not parse date.")
+
             else:
                 parsed_last_used_date = parsed_last_used_date + one_day
 
 
-            if smoothing and parsed_last_used_date > parsed_roll_date:
-                # TODO IMPLEMENT SMOOTHING ON SETTLE VALUES
+            date_indexed_df = df.set_index("Trade Date")
+
+
+            if smoothing and parsed_last_used_date > parsed_roll_date and parsed_last_used_date < parsed_expiration_date:
+
+                last_used_date_str = parsed_last_used_date.strftime(date_format)
+
+
                 current_contract_weight -= shift_weight
                 next_contract_weight    += shift_weight
 
+                try:
+                    row = date_indexed_df.loc[last_used_date_str]
+                except KeyError:
+                    # print("Not a business day.")
+                    current_contract_weight += shift_weight
+                    next_contract_weight    -= shift_weight
+                    # sys.exit("Item not found in DataFrame")
+
+                try:
+                    # GET SETTLE VALUE FROM THIS CONTRACT'S CURRENT DATE
+                    current_contract_settle = row.loc[["Settle"]]
+                    print(current_contract_settle)
+
+                    # GET SETTLE VALUE FROM NEXT CONTRACT'S SAME DATE
+                    next_csv_file = csv_data_list[counter+1]
+                    next_df = pd.read_csv(next_csv_file)
+                    next_date_indexed_df = next_df.set_index("Trade Date")
+                    next_row = next_date_indexed_df.loc[last_used_date_str]
+
+                    next_contract_settle = next_row.loc[[last_used_date_str], ["Settle"]]
+                    print(next_contract_settle)
+
+                    # DO THE MATH
+                    new_settle = (current_contract_settle * current_contract_weight) + (next_contract_settle * next_contract_weight)
+                    print(new_settle)
+
+                    # SET ROW'S SETTLE TO NEW VALUE
+                    row.at[last_used_date_str,"Settle"] = new_settle
+
+                    # APPEND ROW
+                    output_time_series = output_time_series.append(row)
+
+                    # CONTINUE
+                except KeyError:
+                    print("MISTAKES WERE MADE")
+                    pass
 
             else:
-                if parsed_last_used_date == (parsed_roll_date):
-                    roll = True
-                else:
-                    #TODO
-                    df.loc[df['Trade Date'] >= '' & df['Trade Date'] <= '']
-                    #COPY ROW, TO FIND ROW COMPARE PARSED_last_used_date WITH TRADE_DATE IN CSV
+                last_used_date_str = parsed_last_used_date.strftime(date_format)
+
+                try:
+                    row = date_indexed_df.loc[last_used_date_str]
+                    output_time_series = output_time_series.append(row)
+                except KeyError:
+                    pass
+                    # print("Not a business day.")
 
 
+            if parsed_last_used_date == (parsed_expiration_date):
+                print("-----------ROLLING--------------")
+                roll = True
 
 
-
-
-
-
-                #REMOVE AFTER TEST
-                # print(df)
-                # break
-
-    return
+        counter += 1
+    print(output_time_series)
+    output_time_series.to_csv(file_name)
+    # return output_time_series
 
 # TODO EDIT AFTER TESTING
 # Execute
-generate_time_series("2013-01-16", '0', '1', False)
+generate_time_series("2014-05-27", 5, 1, True)
