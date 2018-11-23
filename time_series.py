@@ -6,6 +6,18 @@ import csv
 import sys
 from vix_futures_exp_dates import run_over_time_frame
 
+'''
+Returns boolean signal so that smoothing is implemented
+for business days instead of calendar days.
+Compares amount of entries in dataframe after given date
+with amount of roll_days.
+'''
+def business_days_smoothing(roll_days, dataframe, date_str):
+    sliced_df = dataframe.loc[date_str:]
+    row_amount = len(sliced_df.index) + 1
+    signal = row_amount <= roll_days + 1
+    return signal
+
 
 
 # target_date:      Time series' starting point. Input in '%Y-%m-%d' format.
@@ -137,19 +149,17 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing):
 
             date_indexed_df = df.set_index("Trade Date")
 
-
-
-            # current_contract_settle = ''
-            # next_contract_settle = ''
-            # new_settle = ''
+            # Emptying series so that previous data does not affect outcome.
             row = pd.Series([])
             next_row = pd.Series([])
 
+            last_used_date_str = parsed_last_used_date.strftime(date_format)
 
-            if smoothing and (parsed_last_used_date > parsed_roll_date):
+            business_days_mode = business_days_smoothing(roll_days, date_indexed_df, last_used_date_str)
+
+            # if smoothing and (parsed_last_used_date > parsed_roll_date) and business_days_mode:
+            if smoothing and business_days_mode:
                 print("SMOOTHING")
-                last_used_date_str = parsed_last_used_date.strftime(date_format)
-
 
                 current_contract_weight -= shift_weight
                 next_contract_weight    += shift_weight
@@ -165,7 +175,6 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing):
                 try:
                     # GET SETTLE VALUE FROM THIS CONTRACT'S CURRENT DATE
                     current_contract_settle = row.loc["Settle"]
-                    print("CURRENT " + str(current_contract_settle))
 
                     # GET SETTLE VALUE FROM NEXT CONTRACT'S SAME DATE
                     next_csv_file = csv_data_list[counter+1]
@@ -174,16 +183,12 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing):
                     next_row = next_date_indexed_df.loc[last_used_date_str]
 
                     next_contract_settle = next_row.loc["Settle"]
-                    print("NEXT " + str(next_contract_settle))
 
                     # DO THE MATH
                     new_settle = (current_contract_settle * current_contract_weight) + (next_contract_settle * next_contract_weight)
-                    print("NEW " + str(new_settle))
 
                     # SET ROW'S SETTLE TO NEW VALUE
-                    # row.at[last_used_date_str,"Settle"] = new_settle
-                    row.replace({current_contract_settle : new_settle})
-                    print("REPLACED")
+                    row = row.replace({current_contract_settle : new_settle})
 
                     # APPEND ROW
                     output_time_series = output_time_series.append(row)
@@ -194,8 +199,6 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing):
                     pass
 
             else:
-                last_used_date_str = parsed_last_used_date.strftime(date_format)
-
                 try:
                     row = date_indexed_df.loc[last_used_date_str]
                     output_time_series = output_time_series.append(row)
@@ -204,8 +207,8 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing):
                     # print("Not a business day.")
 
 
-            roll_with_smoothing = parsed_last_used_date == expiration_date and smoothing == False
-            roll_without_smoothing = parsed_last_used_date == parsed_roll_date and smoothing == True
+            roll_with_smoothing = (parsed_last_used_date == parsed_expiration_date) and smoothing
+            roll_without_smoothing = (parsed_last_used_date == parsed_roll_date) and not smoothing
 
             if roll_with_smoothing or roll_without_smoothing:
                 print("-----------ROLLING--------------")
