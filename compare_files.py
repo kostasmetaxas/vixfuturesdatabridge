@@ -20,7 +20,7 @@ def hash_file(filename):
         # return hex of digest
         return hash.hexdigest()
 
-# ------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------
 
 def compare_files():
 
@@ -50,6 +50,9 @@ def compare_files():
                     # Overwrites old version with the updated one.
                     copyfile("new_data/" + a_file, "data/" + a_file)
                     #print("REPLACE")
+            else:
+                copyfile("new_data/" + a_file, "data/" + a_file)
+
         except IndexError:
             # Refers to new files in new_data_list that do not exist in current_data_list.
             #print("EXTRA FILE")

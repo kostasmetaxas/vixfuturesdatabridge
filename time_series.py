@@ -22,7 +22,11 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing):
 
 
     # Create new .csv file where time series data will be inserted.
-    file_name = target_date + '_' + str(roll_days) + '_' + str(months_forward) + '_Time_Series.csv'
+    if smoothing:
+        file_name = target_date + '_' + str(roll_days) + '_' + str(months_forward) + '_Smoothed_' + '_Time_Series.csv'
+    else:
+        file_name = target_date + '_' + str(roll_days) + '_' + str(months_forward) + '_Time_Series.csv'
+
 
     expiration_dates_list = run_over_time_frame()
     valid_contracts = 0
@@ -134,8 +138,16 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing):
             date_indexed_df = df.set_index("Trade Date")
 
 
-            if smoothing and parsed_last_used_date > parsed_roll_date and parsed_last_used_date < parsed_expiration_date:
 
+            # current_contract_settle = ''
+            # next_contract_settle = ''
+            # new_settle = ''
+            row = pd.Series([])
+            next_row = pd.Series([])
+
+
+            if smoothing and (parsed_last_used_date > parsed_roll_date):
+                print("SMOOTHING")
                 last_used_date_str = parsed_last_used_date.strftime(date_format)
 
 
@@ -152,8 +164,8 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing):
 
                 try:
                     # GET SETTLE VALUE FROM THIS CONTRACT'S CURRENT DATE
-                    current_contract_settle = row.loc[["Settle"]]
-                    print(current_contract_settle)
+                    current_contract_settle = row.loc["Settle"]
+                    print("CURRENT " + str(current_contract_settle))
 
                     # GET SETTLE VALUE FROM NEXT CONTRACT'S SAME DATE
                     next_csv_file = csv_data_list[counter+1]
@@ -161,22 +173,24 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing):
                     next_date_indexed_df = next_df.set_index("Trade Date")
                     next_row = next_date_indexed_df.loc[last_used_date_str]
 
-                    next_contract_settle = next_row.loc[[last_used_date_str], ["Settle"]]
-                    print(next_contract_settle)
+                    next_contract_settle = next_row.loc["Settle"]
+                    print("NEXT " + str(next_contract_settle))
 
                     # DO THE MATH
                     new_settle = (current_contract_settle * current_contract_weight) + (next_contract_settle * next_contract_weight)
-                    print(new_settle)
+                    print("NEW " + str(new_settle))
 
                     # SET ROW'S SETTLE TO NEW VALUE
-                    row.at[last_used_date_str,"Settle"] = new_settle
+                    # row.at[last_used_date_str,"Settle"] = new_settle
+                    row.replace({current_contract_settle : new_settle})
+                    print("REPLACED")
 
                     # APPEND ROW
                     output_time_series = output_time_series.append(row)
 
                     # CONTINUE
                 except KeyError:
-                    print("MISTAKES WERE MADE")
+                    # print(last_used_date_str + " IS NOT A BUSINESS DAY")
                     pass
 
             else:
@@ -190,7 +204,10 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing):
                     # print("Not a business day.")
 
 
-            if parsed_last_used_date == (parsed_expiration_date):
+            roll_with_smoothing = parsed_last_used_date == expiration_date and smoothing == False
+            roll_without_smoothing = parsed_last_used_date == parsed_roll_date and smoothing == True
+
+            if roll_with_smoothing or roll_without_smoothing:
                 print("-----------ROLLING--------------")
                 roll = True
 
