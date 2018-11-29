@@ -1,8 +1,8 @@
 import hashlib
 import glob
 import time
-from os.path import exists
 from shutil import copyfile, copy
+from download_link import folder_check
 
 def hash_file(filename):
 
@@ -23,6 +23,9 @@ def hash_file(filename):
 # -------------------------------------------------------------------------------------
 
 def compare_files():
+
+    data_path = "./data"
+    folder_check(data_path)
 
     # current_data_list refers to the data that was used for the last calculation.
     current_data_list = sorted(glob.glob("data/*.csv"))
@@ -49,9 +52,10 @@ def compare_files():
                 if current_file_hash != new_file_hash:
                     # Overwrites old version with the updated one.
                     copyfile("new_data/" + a_file, "data/" + a_file)
-                    #print("REPLACE")
+                    print("Updated " + a_file)
             else:
                 copyfile("new_data/" + a_file, "data/" + a_file)
+                print("Added new data file: " + a_file)
 
         except IndexError:
             # Refers to new files in new_data_list that do not exist in current_data_list.
@@ -62,7 +66,4 @@ def compare_files():
             # Refers to the files in the current_data_list. It is impossible to occur in new_data_list as a for-each loop is implemented.
             print("FILE TO BE HASHED, NOT FOUND. CHECK CONTROL FLOW.")
             pass
-
-
-# Execute
-compare_files()
+    print("------------Data Updated------------")

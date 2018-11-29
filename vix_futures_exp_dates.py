@@ -31,6 +31,8 @@ def is_business_day(input_date_str, input_date):
 
 
 def run_over_time_frame():
+    print("Calculating contract expiration dates...")
+
     #Goes through the years
 
     futures_exp_dates = []
@@ -81,7 +83,6 @@ def run_over_time_frame():
     # Discarding first date element. It contains a date corresponding to the staring year's preceding december future expiration date.
     futures_exp_dates.pop(0)
     # print (futures_exp_dates)
-    return futures_exp_dates
+    print("Expiration Dates Generated.")
 
-# Remove after testing
-# run_over_time_frame()
+    return futures_exp_dates
