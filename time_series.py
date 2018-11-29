@@ -4,7 +4,8 @@ import datetime
 import glob
 import csv
 import sys
-from vix_futures_exp_dates import run_over_time_frame
+from download_link import folder_check
+
 
 '''
 Returns boolean signal so that smoothing is implemented
@@ -24,7 +25,7 @@ def business_days_smoothing(roll_days, dataframe, date_str):
 # roll_days:        Amount of days ,before current contract expiration, roll to the next contract.
 # months_forward:   Refers to the VX<forward>. Example: if forward=2 calculate VX2 curve.
 # smoothing :       Toggle time-series smoothing starting on roll date using the perpetual series method.
-def generate_time_series(target_date, roll_days, months_forward, smoothing):
+def generate_time_series(target_date, roll_days, months_forward, smoothing, expiration_dates_list):
 
     #Date format: Year-Month-Day
     date_format ='%Y-%m-%d'
@@ -32,15 +33,16 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing):
     if roll_days > 15:
         sys.exit('Maximum roll days 15. Insert valid amount of days')
 
+    data_path = "./Results"
+    folder_check(data_path)
 
     # Create new .csv file where time series data will be inserted.
     if smoothing:
-        file_name = target_date + '_' + str(roll_days) + '_' + str(months_forward) + '_Smoothed_' + '_Time_Series.csv'
+        file_name = data_path + '/' + target_date + '_' + str(roll_days) + '_' + str(months_forward) + '_Smoothed_' + '_Time_Series.json'
     else:
-        file_name = target_date + '_' + str(roll_days) + '_' + str(months_forward) + '_Time_Series.csv'
+        file_name = data_path + '/' + target_date + '_' + str(roll_days) + '_' + str(months_forward) + '_Time_Series.json'
 
 
-    expiration_dates_list = run_over_time_frame()
     valid_contracts = 0
 
 
@@ -59,8 +61,7 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing):
             if valid_contracts == months_forward:
                 break
 
-    # TODO
-    # FIX target_contract_index SO THAT IT NEVER LANDS OFF THE LIST
+
     print("TARGET INDEX " + str(target_contract_index))
     first_target_contract = expiration_dates_list[target_contract_index]
 
@@ -106,6 +107,10 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing):
     # Goes through the file list and replaces the dataframe content each time a new file is accessed.
     counter = target_index
 
+
+#-------------------------------------------------------------------------------------------------------------------------------------------
+
+
     while counter <= len(csv_data_list)-1:
         csv_file = csv_data_list[counter]
         df = pd.read_csv(csv_file)
@@ -122,12 +127,6 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing):
         next_contract_weight    = 0
 
         roll = False
-
-
-#-------------------------------------------------------------------------------------------------------------------------------------------
-
-# TODO IMPLEMENT SMOOTHING
-
 
         while not roll:
             try:
@@ -173,19 +172,36 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing):
                     # sys.exit("Item not found in DataFrame")
 
                 try:
-                    # GET SETTLE VALUE FROM THIS CONTRACT'S CURRENT DATE
+                    # GET VALUES FROM THIS CONTRACT'S CURRENT DATE
+                    current_contract_open = row.loc["Open"]
+                    current_contract_high = row.loc["High"]
+                    current_contract_low = row.loc["Low"]
                     current_contract_settle = row.loc["Settle"]
+                    current_contract_volume = row.loc["Volume"]
+                    current_contract_open_interest = row.loc["Open Interest"]
 
-                    # GET SETTLE VALUE FROM NEXT CONTRACT'S SAME DATE
+                    # GET VALUES FROM NEXT CONTRACT'S SAME DATE
                     next_csv_file = csv_data_list[counter+1]
                     next_df = pd.read_csv(next_csv_file)
                     next_date_indexed_df = next_df.set_index("Trade Date")
                     next_row = next_date_indexed_df.loc[last_used_date_str]
 
+                    next_contract_open = next_row.loc["Open"]
+                    next_contract_high = next_row.loc["High"]
+                    next_contract_low = next_row.loc["Low"]
                     next_contract_settle = next_row.loc["Settle"]
+                    next_contract_volume = next_row.loc["Volume"]
+                    next_contract_open_interest = next_row.loc["Open Interest"]
+
+                    #open, high, low, settle, volume, open interest
 
                     # DO THE MATH
+                    new_open = (current_contract_open * current_contract_weight) + (next_contract_open * next_contract_weight)
+                    new_high = (current_contract_high * current_contract_weight) + (next_contract_high * next_contract_weight)
+                    new_low = (current_contract_low * current_contract_weight) + (next_contract_low * next_contract_weight)
                     new_settle = (current_contract_settle * current_contract_weight) + (next_contract_settle * next_contract_weight)
+                    new_volume = (current_contract_volume * current_contract_weight) + (next_contract_volume * next_contract_weight)
+                    new_open_interest = (current_contract_open_interest * current_contract_weight) + (next_contract_open_interest * next_contract_weight)
 
                     # SET ROW'S SETTLE TO NEW VALUE
                     row = row.replace({current_contract_settle : new_settle})
@@ -217,9 +233,4 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing):
 
         counter += 1
     print(output_time_series)
-    output_time_series.to_csv(file_name)
-    # return output_time_series
-
-# TODO EDIT AFTER TESTING
-# Execute
-generate_time_series("2014-05-27", 5, 1, True)
+    output_time_series.to_json(file_name, index=True)

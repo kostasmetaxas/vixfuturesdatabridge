@@ -6,7 +6,7 @@ dateless_link = 'https://markets.cboe.com/us/futures/market_statistics/historica
 data_path = './new_data'
 
 
-#MOVE FUNCTION TO TOP SCRIPT
+# Checks if data destination folder exist
 def folder_check(path):
     print("Checking for destination folder...")
     try:
@@ -17,13 +17,10 @@ def folder_check(path):
         print ("Successfully created the directory " + path)
 
 
-def download_data():
+def download_data(futures_exp_dates):
 
     folder_check(data_path)
 
-    print("Calculating contract expiration dates...")
-    futures_exp_dates = run_over_time_frame()
-    print("Expiration Dates Generated.")
     failed_download_counter = 0
 
     print('Downloading data...')
@@ -43,7 +40,3 @@ def download_data():
 
         if failed_download_counter > 5:
             break
-
-
-# Excecute
-download_data()
