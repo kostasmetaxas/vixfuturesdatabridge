@@ -5,7 +5,29 @@ import glob
 import csv
 import sys
 from download_link import folder_check
-from time_series import contract_finder
+# from time_series import contract_finder
+
+
+'''
+Comparing the input date with each contract's expiration date.
+If the input date is past the contract's expiration +1 is added to the
+valid_contract counter. If valid_contract == forward the first target contract
+means we reached the desired month and are past the first_target_contract.
+Returns the first contract to be used in the time series.
+'''
+def contract_finder(target_date, expiration_dates_list, months_forward):
+    valid_contracts = 0
+    for target_contract_index, a_contract in enumerate(expiration_dates_list):
+
+        if  a_contract >= target_date:
+            valid_contracts += 1
+            print("VALID CONTRACTS " + str(valid_contracts))
+
+            if valid_contracts == months_forward:
+                break
+    first_target_contract = expiration_dates_list[target_contract_index]
+
+    return first_target_contract
 
 
 def business_days_until_expiration(dataframe, date_str):
