@@ -4,7 +4,9 @@ import datetime
 import glob
 import csv
 import sys
+from QuantLib import Business252
 from download_link import folder_check
+
 # from time_series import contract_finder
 
 
@@ -30,11 +32,22 @@ def contract_finder(target_date, expiration_dates_list, months_forward):
     return first_target_contract
 
 
-def business_days_until_expiration(dataframe, date_str):
-    sliced_df = dataframe.loc[date_str:]
-    row_amount = len(sliced_df.index) + 1
+def business_days_until_expiration(current_date, expiration_date):
 
-    return row_amount
+    # Business_instance = Business252();
+    # serial_days = Business_instance.dayCount(current_date, expiration_date)
+
+    # sliced_df = dataframe.loc[date_str:]
+    # row_amount = len(sliced_df.index) + 1
+
+
+    serial_days = pd.bdate_range(current_date, expiration_date)
+    # print(serial_days.argmax())
+    amount_of_days = serial_days.argmax()
+    return amount_of_days
+
+
+
 
 
 # target_date:      Time series' starting point. Input in '%Y-%m-%d' format.
@@ -118,19 +131,13 @@ def constant_maturity_time_series(target_date, desired, months_forward, expirati
 
             last_used_date_str = parsed_last_used_date.strftime(date_format)
 
-            business_days_left = business_days_until_expiration(date_indexed_df, last_used_date_str)
+            business_days_left = business_days_until_expiration(parsed_last_used_date, parsed_expiration_date_current)
 
 
             try:
                 row = date_indexed_df.loc[last_used_date_str]
             except KeyError:
                 pass
-
-
-
-
-
-
 
             try:
                 # GET VALUES FROM THIS CONTRACT'S CURRENT DATE
@@ -155,7 +162,22 @@ def constant_maturity_time_series(target_date, desired, months_forward, expirati
                 next_contract_volume = next_row.loc["Total Volume"]
                 next_contract_open_interest = next_row.loc["Open Interest"]
 
-                business_days_left_next = business_days_until_expiration(next_date_indexed_df, last_used_date_str)
+
+
+                split_string = next_csv_file.split("/",1)
+                temp_name_list1 = split_string[1]
+                temp_name_list2 = temp_name_list1.split('.',1)
+                expiration_date_next = temp_name_list2[0]
+
+                try:
+                    parsed_expiration_date_next = datetime.datetime.strptime(expiration_date_next, date_format)
+                except ValueError:
+                    sys.exit("Can't parse date.")
+
+
+
+
+                business_days_left_next = business_days_until_expiration(parsed_last_used_date, parsed_expiration_date_next)
 
                 divisor = business_days_left - business_days_left_next
                 print(divisor)
