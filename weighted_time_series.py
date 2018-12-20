@@ -180,15 +180,16 @@ def constant_maturity_time_series(target_date, desired, months_forward, expirati
                 business_days_left_next = business_days_until_expiration(parsed_last_used_date, parsed_expiration_date_next)
 
                 divisor = business_days_left - business_days_left_next
-                print(divisor)
 
                 if divisor == 0:
                     print("----DIVISOR ZERO ON------> " + last_used_date_str)
                 else:
                     current_contract_weight = (desired - business_days_left_next) / divisor
                     next_contract_weight = 1 - current_contract_weight
+                    # print(current_contract_weight)
 
-                    #print("CURRENT WEIGHT --> " + str(current_contract_weight) + "     NEXT CONTRACT WEIGHT --> " + str(next_contract_weight))
+
+                    print(last_used_date_str + "     CURRENT WEIGHT --> " + str(current_contract_weight) + "     NEXT CONTRACT WEIGHT --> " + str(next_contract_weight))
 
                     new_open = (current_contract_open * current_contract_weight) + (next_contract_open * next_contract_weight)
                     new_high = (current_contract_high * current_contract_weight) + (next_contract_high * next_contract_weight)
@@ -198,7 +199,12 @@ def constant_maturity_time_series(target_date, desired, months_forward, expirati
                     new_open_interest = (current_contract_open_interest * current_contract_weight) + (next_contract_open_interest * next_contract_weight)
 
                     # SET ROW'S SETTLE TO NEW VALUE
+                    row = row.replace({current_contract_open : new_open})
+                    row = row.replace({current_contract_high : new_high})
+                    row = row.replace({current_contract_low : new_low})
                     row = row.replace({current_contract_settle : new_settle})
+                    row = row.replace({current_contract_volume : new_volume})
+                    row = row.replace({current_contract_open_interest : new_open_interest})
 
                     # APPEND ROW
                     output_time_series = output_time_series.append(row)
