@@ -19,7 +19,7 @@ def time_series_calls():
     # generate_time_series("2014-05-27", 5, 4, True, contract_expiration_list)
     # generate_time_series("2014-05-27", 5, 5, True, contract_expiration_list)
     # generate_time_series("2014-05-27", 5, 6, True, contract_expiration_list)
-    constant_maturity_time_series("2018-11-1", 17, 1, contract_expiration_list)
+    constant_maturity_time_series("2018-11-1", 1, contract_expiration_list)
 
 
 

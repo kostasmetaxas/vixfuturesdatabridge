@@ -1,4 +1,5 @@
 import pandas as pd
+import pandas_market_calendars as market_cal
 import numpy as np
 import datetime
 import glob
@@ -32,18 +33,13 @@ def contract_finder(target_date, expiration_dates_list, months_forward):
     return first_target_contract
 
 
-def business_days_until_expiration(current_date, expiration_date):
+def business_days_amount(start_date, end_date):
 
-    # Business_instance = Business252();
-    # serial_days = Business_instance.dayCount(current_date, expiration_date)
+    cboe_calendar = market_cal.get_calendar('CME')
 
-    # sliced_df = dataframe.loc[date_str:]
-    # row_amount = len(sliced_df.index) + 1
+    schedule = cboe_calendar.schedule(start_date, end_date)
+    amount_of_days = len(schedule)
 
-
-    serial_days = pd.bdate_range(current_date, expiration_date)
-    # print(serial_days.argmax())
-    amount_of_days = serial_days.argmax()
     return amount_of_days
 
 
@@ -53,7 +49,7 @@ def business_days_until_expiration(current_date, expiration_date):
 # target_date:      Time series' starting point. Input in '%Y-%m-%d' format.
 # desired:          Amount of maturity days.
 # months_forward:   <months_forward>m1m
-def constant_maturity_time_series(target_date, desired, months_forward, expiration_dates_list):
+def constant_maturity_time_series(target_date, months_forward, expiration_dates_list):
 
     #Date format: Year-Month-Day
     date_format ='%Y-%m-%d'
@@ -62,7 +58,7 @@ def constant_maturity_time_series(target_date, desired, months_forward, expirati
     folder_check(data_path)
 
     # Create new .json file where time series data will be inserted.
-    file_name = data_path + '/' + target_date + '_' + str(desired) + '_' + str(months_forward) + '_Constant_Maturity.json'
+    file_name = data_path + '/' + target_date + '_' + str(months_forward) + '_Constant_Maturity.json'
 
     first_target_contract = contract_finder(target_date, expiration_dates_list, months_forward)
 
@@ -103,14 +99,14 @@ def constant_maturity_time_series(target_date, desired, months_forward, expirati
         split_string = csv_file.split("/",1)
         temp_name_list1 = split_string[1]
         temp_name_list2 = temp_name_list1.split('.',1)
-        expiration_date = temp_name_list2[0]
-        # print(expiration_date)
+        vx1 = temp_name_list2[0]
+        # print(vx1)
 
         roll = False
 
         while not roll:
             try:
-                parsed_expiration_date_current = datetime.datetime.strptime(expiration_date, date_format)
+                parsed_expiration_date_current = datetime.datetime.strptime(vx1, date_format)
             except ValueError:
                 sys.exit("Can't parse date.")
 
@@ -131,7 +127,8 @@ def constant_maturity_time_series(target_date, desired, months_forward, expirati
 
             last_used_date_str = parsed_last_used_date.strftime(date_format)
 
-            business_days_left = business_days_until_expiration(parsed_last_used_date, parsed_expiration_date_current)
+            # business_days_left = business_days_amount(parsed_last_used_date, parsed_expiration_date_current)
+            business_days_left = business_days_amount(last_used_date_str, vx1)
 
 
             try:
@@ -163,40 +160,40 @@ def constant_maturity_time_series(target_date, desired, months_forward, expirati
                 next_contract_open_interest = next_row.loc["Open Interest"]
 
 
-
+                # Get next contract's expiration_date, vx2
                 split_string = next_csv_file.split("/",1)
                 temp_name_list1 = split_string[1]
                 temp_name_list2 = temp_name_list1.split('.',1)
-                expiration_date_next = temp_name_list2[0]
+                vx2 = temp_name_list2[0]
 
-                try:
-                    parsed_expiration_date_next = datetime.datetime.strptime(expiration_date_next, date_format)
-                except ValueError:
-                    sys.exit("Can't parse date.")
+                # Get last contract's expiration_date, vx0
+                last_csv_file = csv_data_list[counter-1]
+                split_string = last_csv_file.split("/",1)
+                temp_name_list1 = split_string[1]
+                temp_name_list2 = temp_name_list1.split('.',1)
+                vx0 = temp_name_list2[0]
 
 
 
+                # REPLACE
+                dt = business_days_amount(vx0, vx1)
 
-                business_days_left_next = business_days_until_expiration(parsed_last_used_date, parsed_expiration_date_next)
-
-                divisor = business_days_left - business_days_left_next
-
-                if divisor == 0:
+                if dt == 0:
                     print("----DIVISOR ZERO ON------> " + last_used_date_str)
                 else:
-                    current_contract_weight = (desired - business_days_left_next) / divisor
-                    next_contract_weight = 1 - current_contract_weight
-                    # print(current_contract_weight)
+                    dr = business_days_amount(last_used_date_str , vx1)
+                    weight_1 = dr / dt
+                    weight_2 = 1 - weight_1
 
 
-                    print(last_used_date_str + "     CURRENT WEIGHT --> " + str(current_contract_weight) + "     NEXT CONTRACT WEIGHT --> " + str(next_contract_weight))
+                    print(last_used_date_str + "    CURRENT WEIGHT --> " + str(weight_1) + "    NEXT CONTRACT WEIGHT --> " + str(weight_2))
 
-                    new_open = (current_contract_open * current_contract_weight) + (next_contract_open * next_contract_weight)
-                    new_high = (current_contract_high * current_contract_weight) + (next_contract_high * next_contract_weight)
-                    new_low = (current_contract_low * current_contract_weight) + (next_contract_low * next_contract_weight)
-                    new_settle = (current_contract_settle * current_contract_weight) + (next_contract_settle * next_contract_weight)
-                    new_volume = (current_contract_volume * current_contract_weight) + (next_contract_volume * next_contract_weight)
-                    new_open_interest = (current_contract_open_interest * current_contract_weight) + (next_contract_open_interest * next_contract_weight)
+                    new_open = (current_contract_open * weight_1) + (next_contract_open * weight_2)
+                    new_high = (current_contract_high * weight_1) + (next_contract_high * weight_2)
+                    new_low = (current_contract_low * weight_1) + (next_contract_low * weight_2)
+                    new_settle = (current_contract_settle * weight_1) + (next_contract_settle * weight_2)
+                    new_volume = (current_contract_volume * weight_1) + (next_contract_volume * weight_2)
+                    new_open_interest = (current_contract_open_interest * weight_1) + (next_contract_open_interest * weight_2)
 
                     # SET ROW'S SETTLE TO NEW VALUE
                     row = row.replace({current_contract_open : new_open})

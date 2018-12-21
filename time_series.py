@@ -143,8 +143,8 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing, expi
         expiration_date = temp_name_list2[0]
         # print(expiration_date)
 
-        current_contract_weight = 1
-        next_contract_weight    = 0
+        weight_1 = 1
+        weight_2    = 0
 
         roll = False
 
@@ -180,15 +180,15 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing, expi
             if smoothing and business_days_mode:
                 print("SMOOTHING")
 
-                current_contract_weight -= shift_weight
-                next_contract_weight    += shift_weight
+                weight_1 -= shift_weight
+                weight_2    += shift_weight
 
                 try:
                     row = date_indexed_df.loc[last_used_date_str]
                 except KeyError:
                     # print("Not a business day.")
-                    current_contract_weight += shift_weight
-                    next_contract_weight    -= shift_weight
+                    weight_1 += shift_weight
+                    weight_2    -= shift_weight
 
                 try:
                     # GET VALUES FROM THIS CONTRACT'S CURRENT DATE
@@ -215,12 +215,12 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing, expi
                     #open, high, low, settle, volume, open interest
 
                     # DO THE MATH
-                    new_open = (current_contract_open * current_contract_weight) + (next_contract_open * next_contract_weight)
-                    new_high = (current_contract_high * current_contract_weight) + (next_contract_high * next_contract_weight)
-                    new_low = (current_contract_low * current_contract_weight) + (next_contract_low * next_contract_weight)
-                    new_settle = (current_contract_settle * current_contract_weight) + (next_contract_settle * next_contract_weight)
-                    new_volume = (current_contract_volume * current_contract_weight) + (next_contract_volume * next_contract_weight)
-                    new_open_interest = (current_contract_open_interest * current_contract_weight) + (next_contract_open_interest * next_contract_weight)
+                    new_open = (current_contract_open * weight_1) + (next_contract_open * weight_2)
+                    new_high = (current_contract_high * weight_1) + (next_contract_high * weight_2)
+                    new_low = (current_contract_low * weight_1) + (next_contract_low * weight_2)
+                    new_settle = (current_contract_settle * weight_1) + (next_contract_settle * weight_2)
+                    new_volume = (current_contract_volume * weight_1) + (next_contract_volume * weight_2)
+                    new_open_interest = (current_contract_open_interest * weight_1) + (next_contract_open_interest * weight_2)
 
                     # SET ROW'S SETTLE TO NEW VALUE
                     row = row.replace({current_contract_open : new_open})
