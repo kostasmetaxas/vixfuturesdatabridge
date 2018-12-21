@@ -1,4 +1,3 @@
-import csv
 import pandas as pd
 import pandas_market_calendars as market_cal
 import datetime
