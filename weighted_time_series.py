@@ -33,12 +33,17 @@ def contract_finder(target_date, expiration_dates_list, months_forward):
     return first_target_contract
 
 
-def business_days_amount(start_date, end_date):
+def business_days_between(start_date, end_date):
+    """
+    schedule() returns 1 instead of 0 in case both arguments are the same date.
+    """
+    if start_date == end_date:
+        amount_of_days = 0
+    else:
+        cboe_calendar = market_cal.get_calendar('CME')
 
-    cboe_calendar = market_cal.get_calendar('CME')
-
-    schedule = cboe_calendar.schedule(start_date, end_date)
-    amount_of_days = len(schedule)
+        schedule = cboe_calendar.schedule(start_date, end_date)
+        amount_of_days = len(schedule)
 
     return amount_of_days
 
@@ -127,10 +132,6 @@ def constant_maturity_time_series(target_date, months_forward, expiration_dates_
 
             last_used_date_str = parsed_last_used_date.strftime(date_format)
 
-            # business_days_left = business_days_amount(parsed_last_used_date, parsed_expiration_date_current)
-            business_days_left = business_days_amount(last_used_date_str, vx1)
-
-
             try:
                 row = date_indexed_df.loc[last_used_date_str]
             except KeyError:
@@ -176,17 +177,17 @@ def constant_maturity_time_series(target_date, months_forward, expiration_dates_
 
 
                 # REPLACE
-                dt = business_days_amount(vx0, vx1)
+                dt = business_days_between(vx0, vx1)
 
                 if dt == 0:
                     print("----DIVISOR ZERO ON------> " + last_used_date_str)
                 else:
-                    dr = business_days_amount(last_used_date_str , vx1)
+                    dr = business_days_between(last_used_date_str , vx1)
                     weight_1 = dr / dt
                     weight_2 = 1 - weight_1
 
 
-                    print(last_used_date_str + "    CURRENT WEIGHT --> " + str(weight_1) + "    NEXT CONTRACT WEIGHT --> " + str(weight_2))
+                    print(last_used_date_str + "  CURRENT WEIGHT --> " + str(weight_1) + "  NEXT CONTRACT WEIGHT --> " + str(weight_2))
 
                     new_open = (current_contract_open * weight_1) + (next_contract_open * weight_2)
                     new_high = (current_contract_high * weight_1) + (next_contract_high * weight_2)
