@@ -4,7 +4,7 @@ import datetime
 import glob
 import csv
 import sys
-from download_link import folder_check
+from download_link import destination_folder_check
 
 
 '''
@@ -46,7 +46,7 @@ Creating a list with the available contracts, sorted by expiration date
 and setting the index after the ones not needed before the target contract
 so that the time series starts from the correct point in time.
 '''
-def contracts_to_list(csv_data_list):
+def contracts_to_list(csv_data_list, first_target_contract):
     date_list = []
 
     for index, a_file in enumerate(csv_data_list):
@@ -62,11 +62,12 @@ def contracts_to_list(csv_data_list):
     return target_index
 
 
-
+'''
 # target_date:      Time series' starting point. Input in '%Y-%m-%d' format.
 # roll_days:        Amount of days ,before current contract expiration, roll to the next contract.
 # months_forward:   Refers to the VX<forward>. Example: if forward=2 calculate VX2 curve.
 # smoothing :       Toggle time-series smoothing starting on roll date using the perpetual series method.
+'''
 def generate_time_series(target_date, roll_days, months_forward, smoothing, expiration_dates_list):
 
     #Date format: Year-Month-Day
@@ -76,7 +77,7 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing, expi
         sys.exit('Maximum roll days 15. Insert valid amount of days')
 
     data_path = "./Results"
-    folder_check(data_path)
+    destination_folder_check(data_path)
 
     # Create new .json file where time series data will be inserted.
     if smoothing:
@@ -98,17 +99,8 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing, expi
     so that the time series starts from the correct point in time.
     '''
     csv_data_list = sorted(glob.glob("data/*.csv"))
-    date_list = []
 
-    for index, a_file in enumerate(csv_data_list):
-        temp_split_string = a_file.split('/',1)
-        split_string = temp_split_string[1].split('.',1)
-        date_list.append(split_string[0])
-
-    try:
-        target_index = date_list.index(first_target_contract)
-    except ValueError:
-        sys.exit('Invalid target contract index.')
+    target_index = contracts_to_list(csv_data_list, first_target_contract)
 
     # Create an empty df (data frame) with the files' column names.
     df = pd.DataFrame()

@@ -1,25 +1,25 @@
 import os
 import pandas
-from vix_futures_exp_dates import run_over_time_frame
+# from vix_futures_exp_dates import run_over_time_frame
 
 dateless_link = 'https://markets.cboe.com/us/futures/market_statistics/historical_data/products/csv/VX/'
-data_path = './new_data'
+destination_folder_path = './new_data'
 
 
 # Checks if data destination folder exist
-def folder_check(path):
+def destination_folder_check(path):
     print("Checking for destination folder...")
     try:
         os.mkdir(path)
     except OSError:
-        print ("Directory" + path + " already exists. Proceeding.")
+        print ("Directory" + path + " already exists. Proceeding...")
     else:
         print ("Successfully created the directory " + path)
 
 
-def download_data(futures_exp_dates):
+def download_raw_data(futures_exp_dates):
 
-    folder_check(data_path)
+    destination_folder_check(destination_folder_path)
 
     failed_download_counter = 0
 
@@ -30,7 +30,7 @@ def download_data(futures_exp_dates):
 
         try:
             data = pandas.read_csv(dateless_link + expiration_date)
-            data.to_csv(index=False, path_or_buf=data_path + '/' + csv_name)
+            data.to_csv(index=False, path_or_buf=destination_folder_path + '/' + csv_name)
             print(csv_name + " Downloaded.")
         except:
             failed_download_counter += 1

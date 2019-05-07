@@ -6,7 +6,7 @@ import glob
 import csv
 import sys
 from QuantLib import Business252
-from download_link import folder_check
+from download_link import destination_folder_check
 
 # from time_series import contract_finder
 
@@ -60,7 +60,7 @@ def constant_maturity_time_series(target_date, months_forward, expiration_dates_
     date_format ='%Y-%m-%d'
 
     data_path = "./Results"
-    folder_check(data_path)
+    destination_folder_check(data_path)
 
     # Create new .json file where time series data will be inserted.
     file_name = data_path + '/' + target_date + '_' + str(months_forward) + '_Constant_Maturity.json'

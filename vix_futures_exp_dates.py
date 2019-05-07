@@ -5,7 +5,6 @@ import datetime
 #Date format: Year-Month-Day
 date_format ='%Y-%m-%d'
 
-# cboe_calendar = market_cal.calendar_utils.get_calendar('CME')
 cboe_calendar = market_cal.get_calendar('CME')
 
 #Checks if input date is the third friday of the month.
@@ -41,7 +40,7 @@ def run_over_time_frame():
 
 
     # TODO: FIX YEAR RANGE
-    for year in range(2013, 2020):
+    for year in range(2013, 2023):
 
         #Goes through the months
         for month in range(1,13):

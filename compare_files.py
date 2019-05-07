@@ -2,7 +2,7 @@ import hashlib
 import glob
 import time
 from shutil import copyfile, copy
-from download_link import folder_check
+from download_link import destination_folder_check
 
 def hash_file(filename):
 
@@ -25,8 +25,7 @@ def hash_file(filename):
 def compare_files():
 
     data_path = "./data"
-    folder_check(data_path)
-
+    destination_folder_check(data_path)
     # current_data_list refers to the data that was used for the last calculation.
     current_data_list = sorted(glob.glob("data/*.csv"))
     # new_data_list refers to the most recently downloaded data.
