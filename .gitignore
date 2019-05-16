@@ -1,0 +1,7 @@
+data/
+new_data/
+Results/
+.idea/
+.project
+__pycache__/
+.pydevproject

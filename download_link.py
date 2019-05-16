@@ -2,7 +2,7 @@ import os
 import pandas
 # from vix_futures_exp_dates import run_over_time_frame
 
-dateless_link = 'https://markets.cboe.com/us/futures/market_statistics/historical_data/products/csv/VX/'
+DATELESS_LINK = 'https://markets.cboe.com/us/futures/market_statistics/historical_data/products/csv/VX/'
 destination_folder_path = './new_data'
 
 
@@ -29,7 +29,7 @@ def download_raw_data(futures_exp_dates):
         csv_name = expiration_date + '.csv'
 
         try:
-            data = pandas.read_csv(dateless_link + expiration_date)
+            data = pandas.read_csv(DATELESS_LINK + expiration_date)
             data.to_csv(index=False, path_or_buf=destination_folder_path + '/' + csv_name)
             print(csv_name + " Downloaded.")
         except:

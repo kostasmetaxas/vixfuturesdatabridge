@@ -136,7 +136,7 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing, expi
         # print(expiration_date)
 
         weight_1 = 1
-        weight_2    = 0
+        weight_2 = 0
 
         roll = False
 
@@ -180,7 +180,7 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing, expi
                 except KeyError:
                     # print("Not a business day.")
                     weight_1 += shift_weight
-                    weight_2    -= shift_weight
+                    weight_2 -= shift_weight
 
                 try:
                     # GET VALUES FROM THIS CONTRACT'S CURRENT DATE
