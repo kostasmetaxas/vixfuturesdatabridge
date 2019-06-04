@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 import datetime
 import glob
 import csv
@@ -8,7 +9,7 @@ from download_link import destination_folder_check
 
 
 '''
-Returns boolean signal so that smoothing is implemented
+Returns boolean flag so that smoothing is implemented
 for business days instead of calendar days.
 Compares amount of entries in dataframe after given date
 with amount of roll_days.
@@ -16,8 +17,8 @@ with amount of roll_days.
 def is_current_date_past_roll_date(roll_days, dataframe, date_str):
     sliced_df = dataframe.loc[date_str:]
     row_amount = len(sliced_df.index) + 1
-    signal = row_amount <= roll_days + 1
-    return signal
+    flag = row_amount <= roll_days + 1
+    return flag
 
 '''
 Comparing the input date with each contract's expiration date.
@@ -113,11 +114,6 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing, expi
         shift_weight = 1 / roll_days
 
 
-
-#---------------------------------------------------------------------------------------------------------------------------------
-
-
-
     output_time_series = pd.DataFrame()
     parsed_last_used_date = ''
     # Goes through the file list and replaces the dataframe content each time a new file is accessed.
@@ -157,7 +153,6 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing, expi
             else:
                 parsed_last_used_date = parsed_last_used_date + one_day
 
-
             date_indexed_df = df.set_index("Trade Date")
 
             # Emptying series so that previous data does not affect outcome.
@@ -166,14 +161,13 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing, expi
 
             last_used_date_str = parsed_last_used_date.strftime(date_format)
 
-            business_days_mode = is_current_date_past_roll_date(roll_days, date_indexed_df, last_used_date_str)
+            is_past_roll_date = is_current_date_past_roll_date(roll_days, date_indexed_df, last_used_date_str)
 
-            # if smoothing and (parsed_last_used_date > parsed_roll_date) and business_days_mode:
-            if smoothing and business_days_mode:
-                print("SMOOTHING")
+            if smoothing and is_past_roll_date:
+                print("SMOOTHING    " + last_used_date_str)
 
                 weight_1 -= shift_weight
-                weight_2    += shift_weight
+                weight_2 += shift_weight
 
                 try:
                     row = date_indexed_df.loc[last_used_date_str]
@@ -182,52 +176,61 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing, expi
                     weight_1 += shift_weight
                     weight_2 -= shift_weight
 
-                try:
-                    # GET VALUES FROM THIS CONTRACT'S CURRENT DATE
-                    current_contract_open = row.loc["Open"]
-                    current_contract_high = row.loc["High"]
-                    current_contract_low = row.loc["Low"]
-                    current_contract_settle = row.loc["Settle"]
-                    current_contract_volume = row.loc["Volume"]
-                    current_contract_open_interest = row.loc["Open Interest"]
+                #REMOVE
+                print(str(weight_1) + "  +  " + str(weight_2) + "\n")
 
-                    # GET VALUES FROM NEXT CONTRACT'S SAME DATE
+                
+                try:
+                    
+                    # Get values from this contract's current date
+                    current_open = row.loc["Open"]
+                    current_high = row.loc["High"]
+                    current_low = row.loc["Low"]
+                    current_settle = row.loc["Settle"]
+                    current_volume = row.loc["Total Volume"]
+                    current_open_interest = row.loc["Open Interest"]
+
+
+                
+                    # Get values from next contract's same date
                     next_csv_file = csv_data_list[counter+1]
                     next_df = pd.read_csv(next_csv_file)
                     next_date_indexed_df = next_df.set_index("Trade Date")
                     next_row = next_date_indexed_df.loc[last_used_date_str]
 
-                    next_contract_open = next_row.loc["Open"]
-                    next_contract_high = next_row.loc["High"]
-                    next_contract_low = next_row.loc["Low"]
-                    next_contract_settle = next_row.loc["Settle"]
-                    next_contract_volume = next_row.loc["Volume"]
-                    next_contract_open_interest = next_row.loc["Open Interest"]
+                    next_open = next_row.loc["Open"] 
+                    next_high = next_row.loc["High"]
+                    next_low = next_row.loc["Low"]
+                    next_settle = next_row.loc["Settle"]
+                    next_volume = next_row.loc["Total Volume"]
+                    next_open_interest = next_row.loc["Open Interest"]                
+                
+
 
                     #open, high, low, settle, volume, open interest
 
-                    # DO THE MATH
-                    new_open = (current_contract_open * weight_1) + (next_contract_open * weight_2)
-                    new_high = (current_contract_high * weight_1) + (next_contract_high * weight_2)
-                    new_low = (current_contract_low * weight_1) + (next_contract_low * weight_2)
-                    new_settle = (current_contract_settle * weight_1) + (next_contract_settle * weight_2)
-                    new_volume = (current_contract_volume * weight_1) + (next_contract_volume * weight_2)
-                    new_open_interest = (current_contract_open_interest * weight_1) + (next_contract_open_interest * weight_2)
+                    # Do the math
+                    new_open = (current_open * weight_1) + (next_open * weight_2)
+                    new_high = (current_high * weight_1) + (next_high * weight_2)
+                    new_low = (current_low * weight_1) + (next_low * weight_2)
+                    new_settle = (current_settle * weight_1) + (next_settle * weight_2)
+                    new_volume = (current_volume * weight_1) + (next_volume * weight_2)
+                    new_open_interest = (current_open_interest * weight_1) + (next_open_interest * weight_2)
 
-                    # SET ROW'S SETTLE TO NEW VALUE
-                    row = row.replace({current_contract_open : new_open})
-                    row = row.replace({current_contract_high : new_high})
-                    row = row.replace({current_contract_low : new_low})
-                    row = row.replace({current_contract_settle : new_settle})
-                    row = row.replace({current_contract_volume : new_volume})
-                    row = row.replace({current_contract_open_interest : new_open_interest})
+                    # Set row's settle to new value
+                    row = row.replace({current_open : new_open})
+                    row = row.replace({current_high : new_high})
+                    row = row.replace({current_low : new_low})
+                    row = row.replace({current_settle : new_settle})
+                    row = row.replace({current_volume : new_volume})
+                    row = row.replace({current_open_interest : new_open_interest})
 
-                    # APPEND ROW
+                    # Append row
                     output_time_series = output_time_series.append(row)
 
-                    # CONTINUE
+                    # Continue
                 except KeyError:
-                    # print(last_used_date_str + " IS NOT A BUSINESS DAY")
+                    print(last_used_date_str + " IS NOT A BUSINESS DAY")
                     pass
 
             else:
@@ -250,3 +253,11 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing, expi
         counter += 1
     print(output_time_series)
     output_time_series.to_json(file_name, index=True)
+
+    sliced_output = output_time_series.loc[:, "Settle"]
+    try:
+        plt.figure()
+        plt.plot(sliced_output)
+        plt.savefig("settle_graph_unsmoothed" + str(months_forward) + ".png", bbox_inches='tight')
+    except KeyError:
+        print("Plot fucked up")

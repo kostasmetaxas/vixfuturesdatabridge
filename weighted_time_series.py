@@ -1,5 +1,6 @@
 import pandas as pd
 import pandas_market_calendars as market_cal
+import matplotlib.pyplot as plt
 import numpy as np
 import datetime
 import glob
@@ -139,12 +140,12 @@ def constant_maturity_time_series(target_date, months_forward, expiration_dates_
 
             try:
                 # GET VALUES FROM THIS CONTRACT'S CURRENT DATE
-                current_contract_open = row.loc["Open"]
-                current_contract_high = row.loc["High"]
-                current_contract_low = row.loc["Low"]
-                current_contract_settle = row.loc["Settle"]
-                current_contract_volume = row.loc["Total Volume"]
-                current_contract_open_interest = row.loc["Open Interest"]
+                current_open = row.loc["Open"]
+                current_high = row.loc["High"]
+                current_low = row.loc["Low"]
+                current_settle = row.loc["Settle"]
+                current_volume = row.loc["Total Volume"]
+                current_open_interest = row.loc["Open Interest"]
 
                 # GET VALUES FROM NEXT CONTRACT'S SAME DATE
                 next_csv_file = csv_data_list[counter+1]
@@ -153,12 +154,12 @@ def constant_maturity_time_series(target_date, months_forward, expiration_dates_
                 next_row = next_date_indexed_df.loc[last_used_date_str]
 
 
-                next_contract_open = next_row.loc["Open"]
-                next_contract_high = next_row.loc["High"]
-                next_contract_low = next_row.loc["Low"]
-                next_contract_settle = next_row.loc["Settle"]
-                next_contract_volume = next_row.loc["Total Volume"]
-                next_contract_open_interest = next_row.loc["Open Interest"]
+                next_open = next_row.loc["Open"]
+                next_high = next_row.loc["High"]
+                next_low = next_row.loc["Low"]
+                next_settle = next_row.loc["Settle"]
+                next_volume = next_row.loc["Total Volume"]
+                next_open_interest = next_row.loc["Open Interest"]
 
 
                 # Get next contract's expiration_date, vx2
@@ -187,22 +188,22 @@ def constant_maturity_time_series(target_date, months_forward, expiration_dates_
                     weight_2 = 1 - weight_1
 
 
-                    print(last_used_date_str + "  CURRENT WEIGHT --> " + str(weight_1) + "  NEXT CONTRACT WEIGHT --> " + str(weight_2))
+                    # print(last_used_date_str + "  CURRENT WEIGHT --> " + str(weight_1) + "  NEXT CONTRACT WEIGHT --> " + str(weight_2))
 
-                    new_open = (current_contract_open * weight_1) + (next_contract_open * weight_2)
-                    new_high = (current_contract_high * weight_1) + (next_contract_high * weight_2)
-                    new_low = (current_contract_low * weight_1) + (next_contract_low * weight_2)
-                    new_settle = (current_contract_settle * weight_1) + (next_contract_settle * weight_2)
-                    new_volume = (current_contract_volume * weight_1) + (next_contract_volume * weight_2)
-                    new_open_interest = (current_contract_open_interest * weight_1) + (next_contract_open_interest * weight_2)
+                    new_open = (current_open * weight_1) + (next_open * weight_2)
+                    new_high = (current_high * weight_1) + (next_high * weight_2)
+                    new_low = (current_low * weight_1) + (next_low * weight_2)
+                    new_settle = (current_settle * weight_1) + (next_settle * weight_2)
+                    new_volume = (current_volume * weight_1) + (next_volume * weight_2)
+                    new_open_interest = (current_open_interest * weight_1) + (next_open_interest * weight_2)
 
                     # SET ROW'S SETTLE TO NEW VALUE
-                    row = row.replace({current_contract_open : new_open})
-                    row = row.replace({current_contract_high : new_high})
-                    row = row.replace({current_contract_low : new_low})
-                    row = row.replace({current_contract_settle : new_settle})
-                    row = row.replace({current_contract_volume : new_volume})
-                    row = row.replace({current_contract_open_interest : new_open_interest})
+                    row = row.replace({current_open : new_open})
+                    row = row.replace({current_high : new_high})
+                    row = row.replace({current_low : new_low})
+                    row = row.replace({current_settle : new_settle})
+                    row = row.replace({current_volume : new_volume})
+                    row = row.replace({current_open_interest : new_open_interest})
 
                     # APPEND ROW
                     output_time_series = output_time_series.append(row)
@@ -220,3 +221,11 @@ def constant_maturity_time_series(target_date, months_forward, expiration_dates_
         counter += 1
     print(output_time_series)
     output_time_series.to_json(file_name, index=True)
+
+    sliced_output = output_time_series.loc[:, "Settle"]
+    try:
+        plt.figure()
+        plt.plot(sliced_output)
+        plt.savefig("settle_graph_30day" + str(months_forward) + ".png", bbox_inches='tight')
+    except KeyError:
+        print("Plot fucked up")

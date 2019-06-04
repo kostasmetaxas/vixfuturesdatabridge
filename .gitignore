@@ -5,3 +5,4 @@ Results/
 .project
 __pycache__/
 .pydevproject
+*.png
