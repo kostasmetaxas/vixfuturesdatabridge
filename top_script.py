@@ -17,14 +17,17 @@ def time_series_calls():
     generate_time_series("2014-05-27", 5, 1, True, contract_expiration_list)
     generate_time_series("2014-05-27", 5, 2, True, contract_expiration_list)
     generate_time_series("2014-05-27", 5, 3, True, contract_expiration_list)
-    # generate_time_series("2014-05-27", 5, 4, True, contract_expiration_list)
-    # generate_time_series("2014-05-27", 5, 5, True, contract_expiration_list)
-    # generate_time_series("2014-05-27", 5, 6, True, contract_expiration_list)
+    generate_time_series("2014-05-27", 5, 4, True, contract_expiration_list)
+    generate_time_series("2014-05-27", 5, 5, True, contract_expiration_list)
+    generate_time_series("2014-05-27", 5, 6, True, contract_expiration_list)
     constant_maturity_time_series("2014-05-27", 1, contract_expiration_list)
     constant_maturity_time_series("2014-05-27", 2, contract_expiration_list)
-
+    constant_maturity_time_series("2014-05-27", 3, contract_expiration_list)
+    constant_maturity_time_series("2014-05-27", 4, contract_expiration_list)
+    constant_maturity_time_series("2014-05-27", 5, contract_expiration_list)
+    constant_maturity_time_series("2014-05-27", 6, contract_expiration_list)
 
 
 #Excecute
-#update_data()
+update_data()
 time_series_calls()

@@ -3,14 +3,14 @@ import pandas_market_calendars as market_cal
 import datetime
 
 #Date format: Year-Month-Day
-date_format ='%Y-%m-%d'
+DATE_FORMAT ='%Y-%m-%d'
 
 cboe_calendar = market_cal.get_calendar('CME')
 
 #Checks if input date is the third friday of the month.
 #Returns True - False
 def is_third_friday_of_month(input_date, friday_counter):
-    parsed_current_date = datetime.datetime.strptime(input_date, date_format)
+    parsed_current_date = datetime.datetime.strptime(input_date, DATE_FORMAT)
     current_week_num = parsed_current_date.isocalendar()[1]
     return (friday_counter == 3) and (parsed_current_date.weekday() == 4)
 
@@ -19,7 +19,7 @@ def is_business_day(input_date_str, input_date):
     seven_days = datetime.timedelta(days=7)
     start_date = input_date - seven_days
 
-    start_date_str = start_date.strftime(date_format)
+    start_date_str = start_date.strftime(DATE_FORMAT)
     end_date_str = input_date_str
 
     schedule = cboe_calendar.schedule(start_date_str, end_date_str)
@@ -58,7 +58,7 @@ def run_over_time_frame():
                 current_day = new_string_part
 
                 current_date = '-'.join([current_year, current_month, current_day])
-                parsed_current_date = datetime.datetime.strptime(current_date, date_format)
+                parsed_current_date = datetime.datetime.strptime(current_date, DATE_FORMAT)
 
                 if parsed_current_date.weekday() == 4:
                     friday_counter += 1
@@ -69,12 +69,12 @@ def run_over_time_frame():
                     # If input date is a holiday, subtract one day until a business day is found.
                     while not is_business_day(current_date, parsed_current_date):
                         parsed_current_date = parsed_current_date - one_day
-                        current_date = parsed_current_date.strftime(date_format)
+                        current_date = parsed_current_date.strftime(DATE_FORMAT)
 
                     current_date_minus_month = parsed_current_date - thirty_days
 
-                    futures_exp_dates.append(current_date_minus_month.strftime(date_format))
-                    # print('VIX EXPIRATION', current_date_minus_month.strftime(date_format))
+                    futures_exp_dates.append(current_date_minus_month.strftime(DATE_FORMAT))
+                    # print('VIX EXPIRATION', current_date_minus_month.strftime(DATE_FORMAT))
 
                     break
 

@@ -6,3 +6,4 @@ Results/
 __pycache__/
 .pydevproject
 *.png
+*.code-workspace

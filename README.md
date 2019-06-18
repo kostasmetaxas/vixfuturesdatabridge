@@ -63,6 +63,7 @@ These instructions assume you've already installed a version of Python 3.
 
     `pip install QuantLib-Python`
 
+    `pip install matplotlib`
 
 
 ### Deactivating your virtualenv

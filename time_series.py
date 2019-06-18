@@ -16,8 +16,8 @@ with amount of roll_days.
 '''
 def is_current_date_past_roll_date(roll_days, dataframe, date_str):
     sliced_df = dataframe.loc[date_str:]
-    row_amount = len(sliced_df.index) + 1
-    flag = row_amount <= roll_days + 1
+    row_amount = len(sliced_df.index)
+    flag = row_amount <= roll_days
     return flag
 
 '''
@@ -63,6 +63,21 @@ def contracts_to_list(csv_data_list, first_target_contract):
     return target_index
 
 
+def sliced_dataframe_plus_expiration(csv_data_list, counter, months_forward):
+    mf1_csv = csv_data_list[counter - months_forward + 1]
+    split_string = mf1_csv.split("/",1)
+    temp_name_list1 = split_string[1]
+    temp_name_list2 = temp_name_list1.split('.',1)
+    expiration_date = temp_name_list2[0]
+
+    selected_csv = csv_data_list[counter]
+    selected_df = pd.read_csv(selected_csv)
+
+    selected_df_ind = selected_df.set_index("Trade Date")
+    sliced_dataframe = selected_df_ind.loc[:expiration_date]
+
+    return (sliced_dataframe, expiration_date)
+
 '''
 # target_date:      Time series' starting point. Input in '%Y-%m-%d' format.
 # roll_days:        Amount of days ,before current contract expiration, roll to the next contract.
@@ -75,7 +90,10 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing, expi
     date_format ='%Y-%m-%d'
 
     if roll_days > 15:
-        sys.exit('Maximum roll days 15. Insert valid amount of days')
+        sys.exit('Maximum roll days 15. Insert valid amount of days. \n Exiting...')
+
+    if months_forward <= 0:
+        sys.exit('Minimum months forward == 1. Insert valid amount. \n Exiting...')
 
     data_path = "./Results"
     destination_folder_check(data_path)
@@ -120,17 +138,21 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing, expi
     counter = target_index
 
     while counter <= len(csv_data_list)-1:
-        csv_file = csv_data_list[counter]
-        df = pd.read_csv(csv_file)
-        # print(df)
 
+        if (months_forward == 1):
+            csv_file = csv_data_list[counter]
+            df = pd.read_csv(csv_file)
 
-        split_string = csv_file.split("/",1)
-        temp_name_list1 = split_string[1]
-        temp_name_list2 = temp_name_list1.split('.',1)
-        expiration_date = temp_name_list2[0]
-        # print(expiration_date)
+            split_string = csv_file.split("/",1)
+            temp_name_list1 = split_string[1]
+            temp_name_list2 = temp_name_list1.split('.',1)
 
+            expiration_date = temp_name_list2[0]
+            date_indexed_df = df.set_index("Trade Date")
+
+        else:
+            date_indexed_df, expiration_date = sliced_dataframe_plus_expiration(csv_data_list, counter, months_forward)
+             
         weight_1 = 1
         weight_2 = 0
 
@@ -153,7 +175,6 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing, expi
             else:
                 parsed_last_used_date = parsed_last_used_date + one_day
 
-            date_indexed_df = df.set_index("Trade Date")
 
             # Emptying series so that previous data does not affect outcome.
             row = pd.Series([])
@@ -164,7 +185,7 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing, expi
             is_past_roll_date = is_current_date_past_roll_date(roll_days, date_indexed_df, last_used_date_str)
 
             if smoothing and is_past_roll_date:
-                print("SMOOTHING    " + last_used_date_str)
+                # print("SMOOTHING    " + last_used_date_str)
 
                 weight_1 -= shift_weight
                 weight_2 += shift_weight
@@ -175,9 +196,6 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing, expi
                     # print("Not a business day.")
                     weight_1 += shift_weight
                     weight_2 -= shift_weight
-
-                #REMOVE
-                print(str(weight_1) + "  +  " + str(weight_2) + "\n")
 
                 
                 try:
@@ -205,9 +223,6 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing, expi
                     next_volume = next_row.loc["Total Volume"]
                     next_open_interest = next_row.loc["Open Interest"]                
                 
-
-
-                    #open, high, low, settle, volume, open interest
 
                     # Do the math
                     new_open = (current_open * weight_1) + (next_open * weight_2)
@@ -241,7 +256,6 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing, expi
                     pass
                     # print("Not a business day.")
 
-
             roll_with_smoothing = (parsed_last_used_date == parsed_expiration_date) and smoothing
             roll_without_smoothing = (parsed_last_used_date == parsed_roll_date) and not smoothing
 
@@ -251,6 +265,7 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing, expi
 
 
         counter += 1
+
     print(output_time_series)
     output_time_series.to_json(file_name, index=True)
 
@@ -258,6 +273,6 @@ def generate_time_series(target_date, roll_days, months_forward, smoothing, expi
     try:
         plt.figure()
         plt.plot(sliced_output)
-        plt.savefig("settle_graph_unsmoothed" + str(months_forward) + ".png", bbox_inches='tight')
+        plt.savefig("settle_graph_smoothed" + str(months_forward) + ".png", bbox_inches='tight')
     except KeyError:
         print("Plot fucked up")

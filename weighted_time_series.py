@@ -49,6 +49,20 @@ def business_days_between(start_date, end_date):
     return amount_of_days
 
 
+def sliced_dataframe_plus_expiration(csv_data_list, counter, months_forward):
+    mf1_csv = csv_data_list[counter - months_forward + 1]
+    split_string = mf1_csv.split("/",1)
+    temp_name_list1 = split_string[1]
+    temp_name_list2 = temp_name_list1.split('.',1)
+    expiration_date = temp_name_list2[0]
+
+    selected_csv = csv_data_list[counter]
+    selected_df = pd.read_csv(selected_csv)
+
+    selected_df_ind = selected_df.set_index("Trade Date")
+    sliced_dataframe = selected_df_ind.loc[:expiration_date]
+
+    return (sliced_dataframe, expiration_date)
 
 
 
@@ -56,6 +70,11 @@ def business_days_between(start_date, end_date):
 # desired:          Amount of maturity days.
 # months_forward:   <months_forward>m1m
 def constant_maturity_time_series(target_date, months_forward, expiration_dates_list):
+
+
+    if months_forward <= 0:
+        sys.exit('Minimum months forward == 1. Insert valid amount. \n Exiting...')
+
 
     #Date format: Year-Month-Day
     date_format ='%Y-%m-%d'
@@ -91,7 +110,6 @@ def constant_maturity_time_series(target_date, months_forward, expiration_dates_
     df = pd.DataFrame()
     next_df = pd.DataFrame()
     one_day = datetime.timedelta(days=1)
-    thirty_days = datetime.timedelta(days=30)
 
     output_time_series = pd.DataFrame()
     parsed_last_used_date = ''
@@ -100,19 +118,24 @@ def constant_maturity_time_series(target_date, months_forward, expiration_dates_
 
     while counter <= len(csv_data_list)-1:
         csv_file = csv_data_list[counter]
-        df = pd.read_csv(csv_file)
-
         split_string = csv_file.split("/",1)
         temp_name_list1 = split_string[1]
         temp_name_list2 = temp_name_list1.split('.',1)
         vx1 = temp_name_list2[0]
-        # print(vx1)
+
+        if (months_forward == 1):
+            df = pd.read_csv(csv_file)
+            date_indexed_df = df.set_index("Trade Date")
+            expiration_date = vx1
+
+        else:
+            date_indexed_df, expiration_date = sliced_dataframe_plus_expiration(csv_data_list, counter, months_forward)
 
         roll = False
 
         while not roll:
             try:
-                parsed_expiration_date_current = datetime.datetime.strptime(vx1, date_format)
+                parsed_expiration_date_current = datetime.datetime.strptime(expiration_date, date_format)
             except ValueError:
                 sys.exit("Can't parse date.")
 
@@ -125,7 +148,6 @@ def constant_maturity_time_series(target_date, months_forward, expiration_dates_
             else:
                 parsed_last_used_date = parsed_last_used_date + one_day
 
-            date_indexed_df = df.set_index("Trade Date")
 
             # Emptying series so that previous data does not affect outcome.
             row = pd.Series([])
@@ -161,13 +183,6 @@ def constant_maturity_time_series(target_date, months_forward, expiration_dates_
                 next_volume = next_row.loc["Total Volume"]
                 next_open_interest = next_row.loc["Open Interest"]
 
-
-                # Get next contract's expiration_date, vx2
-                split_string = next_csv_file.split("/",1)
-                temp_name_list1 = split_string[1]
-                temp_name_list2 = temp_name_list1.split('.',1)
-                vx2 = temp_name_list2[0]
-
                 # Get last contract's expiration_date, vx0
                 last_csv_file = csv_data_list[counter-1]
                 split_string = last_csv_file.split("/",1)
@@ -187,8 +202,6 @@ def constant_maturity_time_series(target_date, months_forward, expiration_dates_
                     weight_1 = dr / dt
                     weight_2 = 1 - weight_1
 
-
-                    # print(last_used_date_str + "  CURRENT WEIGHT --> " + str(weight_1) + "  NEXT CONTRACT WEIGHT --> " + str(weight_2))
 
                     new_open = (current_open * weight_1) + (next_open * weight_2)
                     new_high = (current_high * weight_1) + (next_high * weight_2)
@@ -219,6 +232,7 @@ def constant_maturity_time_series(target_date, months_forward, expiration_dates_
 
 
         counter += 1
+
     print(output_time_series)
     output_time_series.to_json(file_name, index=True)
 
@@ -228,4 +242,4 @@ def constant_maturity_time_series(target_date, months_forward, expiration_dates_
         plt.plot(sliced_output)
         plt.savefig("settle_graph_30day" + str(months_forward) + ".png", bbox_inches='tight')
     except KeyError:
-        print("Plot fucked up")
+        print("Plot messed up")
