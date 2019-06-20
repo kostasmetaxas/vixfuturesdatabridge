@@ -72,12 +72,15 @@ def sliced_dataframe_plus_expiration(csv_data_list, counter, months_forward):
 def constant_maturity_time_series(target_date, months_forward, expiration_dates_list):
 
 
+    # TODO: remove after debugging
+    log = open("log" + str(months_forward) + ".txt", "w")
+
     if months_forward <= 0:
         sys.exit('Minimum months forward == 1. Insert valid amount. \n Exiting...')
 
 
     #Date format: Year-Month-Day
-    date_format ='%Y-%m-%d'
+    DATE_FORMAT ='%Y-%m-%d'
 
     data_path = "./Results"
     destination_folder_check(data_path)
@@ -127,7 +130,6 @@ def constant_maturity_time_series(target_date, months_forward, expiration_dates_
             df = pd.read_csv(csv_file)
             date_indexed_df = df.set_index("Trade Date")
             expiration_date = vx1
-
         else:
             date_indexed_df, expiration_date = sliced_dataframe_plus_expiration(csv_data_list, counter, months_forward)
 
@@ -135,13 +137,13 @@ def constant_maturity_time_series(target_date, months_forward, expiration_dates_
 
         while not roll:
             try:
-                parsed_expiration_date_current = datetime.datetime.strptime(expiration_date, date_format)
+                parsed_expiration_date_current = datetime.datetime.strptime(expiration_date, DATE_FORMAT)
             except ValueError:
                 sys.exit("Can't parse date.")
 
             if parsed_last_used_date == '':
                 try:
-                    parsed_last_used_date = datetime.datetime.strptime(target_date, date_format)
+                    parsed_last_used_date = datetime.datetime.strptime(target_date, DATE_FORMAT)
                 except ValueError:
                     sys.exit("Can not parse date.")
 
@@ -153,7 +155,7 @@ def constant_maturity_time_series(target_date, months_forward, expiration_dates_
             row = pd.Series([])
             next_row = pd.Series([])
 
-            last_used_date_str = parsed_last_used_date.strftime(date_format)
+            last_used_date_str = parsed_last_used_date.strftime(DATE_FORMAT)
 
             try:
                 row = date_indexed_df.loc[last_used_date_str]
@@ -198,7 +200,15 @@ def constant_maturity_time_series(target_date, months_forward, expiration_dates_
                 if dt == 0:
                     print("----DIVISOR ZERO ON------> " + last_used_date_str)
                 else:
-                    dr = business_days_between(last_used_date_str , vx1)
+                    # TODO: remove after debugging
+                    dr = business_days_between(last_used_date_str , expiration_date)
+                    # dr = business_days_between(last_used_date_str , vx1)
+
+                    # TODO: remove after debugging
+                    if(dr ==0):
+                        log.write(str(last_used_date_str) + " <--->" + str(vx1) + "  <---------- DR = 0\n")
+
+
                     weight_1 = dr / dt
                     weight_2 = 1 - weight_1
 
@@ -221,6 +231,9 @@ def constant_maturity_time_series(target_date, months_forward, expiration_dates_
                     # APPEND ROW
                     output_time_series = output_time_series.append(row)
 
+                    # TODO: remove after debugging
+                    log.write(str(last_used_date_str) +  "  ---->  " + str(csv_data_list[counter] + "  " + str(new_settle) + "\n"))
+
                 # CONTINUE
             except KeyError:
                 # print(last_used_date_str + " IS NOT A BUSINESS DAY")
@@ -233,13 +246,18 @@ def constant_maturity_time_series(target_date, months_forward, expiration_dates_
 
         counter += 1
 
+
+    # TODO: remove after debugging
+    log.close()
+
+
     print(output_time_series)
     output_time_series.to_json(file_name, index=True)
 
-    sliced_output = output_time_series.loc[:, "Settle"]
-    try:
-        plt.figure()
-        plt.plot(sliced_output)
-        plt.savefig("settle_graph_30day" + str(months_forward) + ".png", bbox_inches='tight')
-    except KeyError:
-        print("Plot messed up")
+    # sliced_output = output_time_series.loc[:, "Settle"]
+    # try:
+    #     plt.figure()
+    #     plt.plot(sliced_output)
+    #     plt.savefig("settle_graph_30day" + str(months_forward) + ".png", bbox_inches='tight')
+    # except KeyError:
+    #     print("Plot messed up")
